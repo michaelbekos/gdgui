@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<license>
+  <licensefileversion>1.0</licensefileversion>
+  <product>yFiles for Java</product>
+  <package>complete</package>
+  <company>Universität Tübingen, Arbeitsbereich Algorithmik</company>
+  <contact>Robert Krug</contact>
+  <email>algoyguy@informatik.uni-tuebingen.de</email>
+  <type>site</type>
+  <sitename>Universität Tübingen</sitename>
+  <distribution>true</distribution>
+  <version>3.0</version>
+  <date>04/05/2016</date>
+  <subscription>12/31/2016</subscription>
+  <key>65242b0d50c1a0c3ba24f049ca039d87c1e9eb348e3b37bd4d3f9068d0d61d6c98016731abbbed21a071f17fe3a1c2afcf8a173b72b9a976a28872576ce80b08eb46660652f12a7dd8b3723cc6ee9407b62ecfae4a41f20fe04e65414b7df1c1f9a4900a7b15223aa94051aa2b800abdf46349a0806d34396ccb82eb542cc191</key>
+</license>
