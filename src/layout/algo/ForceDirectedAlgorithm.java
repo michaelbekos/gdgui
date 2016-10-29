@@ -10,7 +10,8 @@ import com.yworks.yfiles.graph.Mapper;
 import com.yworks.yfiles.view.GraphComponent;
 import com.yworks.yfiles.view.ICanvasObject;
 import com.yworks.yfiles.view.ICanvasObjectDescriptor;
-import event.AlgorithmListener;
+import layout.algo.event.AlgorithmEvent;
+import layout.algo.event.AlgorithmListener;
 import view.visual.VectorVisual;
 
 import java.awt.*;
@@ -62,7 +63,7 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
      */
     public void run()
     {
-        event.AlgorithmEvent evt = new event.AlgorithmEvent(this, 0);
+        AlgorithmEvent evt = new AlgorithmEvent(this, 0);
 
         //Notify the listeners that the algorithms is started.
         for (Iterator<AlgorithmListener> it = this.algorithmListeners.iterator(); it.hasNext(); )
@@ -194,7 +195,7 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
      * Adds a new Algorithm Listener.
      * @param algorithmListener - an algorithm listener
      */
-    public void addAlgorithmListener(event.AlgorithmListener algorithmListener)
+    public void addAlgorithmListener(AlgorithmListener algorithmListener)
     {
         this.algorithmListeners.add(algorithmListener);
     }
@@ -203,7 +204,7 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
      * Remove an Algorithm Listener.
      * @param algorithmListener - an algorithm listener
      */
-    public void removeAlgorithmListener(event.AlgorithmListener algorithmListener)
+    public void removeAlgorithmListener(AlgorithmListener algorithmListener)
     {
         this.algorithmListeners.remove(algorithmListener);
     }

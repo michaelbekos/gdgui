@@ -26,6 +26,8 @@ import io.ChristianIOHandler;
 import io.SergeyIOHandler;
 import layout.algo.ForceDirectedAlgorithm;
 import layout.algo.ForceDirectedFactory;
+import layout.algo.event.AlgorithmEvent;
+import layout.algo.event.AlgorithmListener;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -87,6 +89,7 @@ public class MainFrame extends JFrame {
         //this.setLocation(x, y);
 
         super.setTitle("Graph Drawing Tool");
+        super.setMinimumSize(new Dimension(400,300));
         super.setExtendedState(MAXIMIZED_BOTH);
         super.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         super.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -832,6 +835,10 @@ public class MainFrame extends JFrame {
         super.setJMenuBar(this.mainMenuBar);
     }
 
+    /*********************************************************************
+     * Implementation of actions
+     ********************************************************************/
+
     private void springEmbedderItemActionPerformed(ActionEvent evt) {
         JTextField iterationsTextField = new JTextField("1000");
         int iterations = 1000;
@@ -852,17 +859,17 @@ public class MainFrame extends JFrame {
                 ForceDirectedFactory.calculateElectricForcesEades(graph, 50000, 0.01, map);
             }
         };
-        fd.addAlgorithmListener(new event.AlgorithmListener() {
-            public void algorithmStarted(event.AlgorithmEvent evt) {
+        fd.addAlgorithmListener(new AlgorithmListener() {
+            public void algorithmStarted(AlgorithmEvent evt) {
             }
 
-            public void algorithmFinished(event.AlgorithmEvent evt) {
+            public void algorithmFinished(AlgorithmEvent evt) {
                 progressBar.setValue(0);
                 view.fitContent();
                 view.updateUI();
             }
 
-            public void algorithmStateChanged(event.AlgorithmEvent evt) {
+            public void algorithmStateChanged(AlgorithmEvent evt) {
                 progressBar.setValue(evt.currentStatus());
             }
         });
@@ -1575,6 +1582,10 @@ public class MainFrame extends JFrame {
             }
         }
     }
+
+    /*********************************************************************
+     * Additional GUI-related Fields
+     ********************************************************************/
 
     private JPanel mainPanel;
     private JPanel progressBarPanel;

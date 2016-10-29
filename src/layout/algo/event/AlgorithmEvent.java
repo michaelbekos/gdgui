@@ -1,4 +1,4 @@
-package event;
+package layout.algo.event;
 
 /**
  * This class corresponds to an event produced by an algorithm, which has a certain status within [0,100].

@@ -1,4 +1,4 @@
-package event;
+package layout.algo.event;
 
 /**
  * This is an listener interface for an algorithm, support three methods:
@@ -12,15 +12,15 @@ public interface AlgorithmListener
     /**
      * Algorithm Started
      */
-    void algorithmStarted(event.AlgorithmEvent evt);
+    void algorithmStarted(AlgorithmEvent evt);
 
     /**
      * Algorithm Finished
      */
-    void algorithmFinished(event.AlgorithmEvent evt);
+    void algorithmFinished(AlgorithmEvent evt);
 
     /**
      * Returns the current status of the algorithm.
      */
-    void algorithmStateChanged(event.AlgorithmEvent evt);
+    void algorithmStateChanged(AlgorithmEvent evt);
 }
