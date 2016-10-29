@@ -12,8 +12,6 @@ import com.yworks.yfiles.layout.circular.CircularLayout;
 import com.yworks.yfiles.layout.organic.OrganicLayout;
 import com.yworks.yfiles.layout.orthogonal.OrthogonalLayout;
 import com.yworks.yfiles.layout.tree.TreeLayout;
-import com.yworks.yfiles.utils.IEventListener;
-import com.yworks.yfiles.utils.ItemEventArgs;
 import com.yworks.yfiles.view.*;
 import com.yworks.yfiles.view.export.CanvasPrintable;
 import com.yworks.yfiles.view.export.ContextConfigurator;
@@ -56,16 +54,13 @@ public class MainFrame extends JFrame {
     private boolean isGridVisible;
 
     /* Default Styles */
-    ShinyPlateNodeStyle defaultNodeStyle;
-    PolylineEdgeStyle   defaultEdgeStyle;
-    SimpleLabelStyle defaultLabelStyle;
+    private ShinyPlateNodeStyle defaultNodeStyle;
+    private PolylineEdgeStyle   defaultEdgeStyle;
+    private SimpleLabelStyle defaultLabelStyle;
 
     /* Object that keeps track of the latest open/saved file */
     private String fileNamePath;
     private String fileNamePathFolder;
-
-    /* Object invoked to run the algorithms */
-    private Thread thread;
 
     /* Central gui elements */
     private JLabel infoLabel;
@@ -135,17 +130,14 @@ public class MainFrame extends JFrame {
         this.graphEditorInputMode.setCreateEdgeAllowed(true);
         this.graphEditorInputMode.setCreateBendAllowed(true);
         this.graphEditorInputMode.setEditLabelAllowed(true);
-        this.graphEditorInputMode.addPopulateItemPopupMenuListener(new IEventListener<PopulateItemPopupMenuEventArgs<IModelItem>>() {
-            @Override
-            public void onEvent(Object o, PopulateItemPopupMenuEventArgs<IModelItem> iModelItemPopulateItemPopupMenuEventArgs) {
-                if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof INode)
-                {
-                    populateNodePopupMenu(o, iModelItemPopulateItemPopupMenuEventArgs);
-                }
-                if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof IEdge)
-                {
-                    populateEdgePopupMenu(o, iModelItemPopulateItemPopupMenuEventArgs);
-                }
+        this.graphEditorInputMode.addPopulateItemPopupMenuListener((o, iModelItemPopulateItemPopupMenuEventArgs) -> {
+            if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof INode)
+            {
+                populateNodePopupMenu(iModelItemPopulateItemPopupMenuEventArgs);
+            }
+            if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof IEdge)
+            {
+                populateEdgePopupMenu(iModelItemPopulateItemPopupMenuEventArgs);
             }
         });
         this.view.setInputMode(this.graphEditorInputMode);
@@ -153,24 +145,18 @@ public class MainFrame extends JFrame {
         /*********************************************************************
          * Add two listeners two the graph
          ********************************************************************/
-        this.view.getGraph().addNodeCreatedListener(new IEventListener<ItemEventArgs<INode>>() {
-            @Override
-            public void onEvent(Object o, ItemEventArgs<INode> iNodeItemEventArgs) {
-                if (iNodeItemEventArgs.getItem() instanceof INode)
-                {
-                    view.getGraph().addLabel((INode)iNodeItemEventArgs.getItem(), new Integer(view.getGraph().getNodes().size()-1).toString());
-                    infoLabel.setText("Number of Vetrices: " + view.getGraph().getNodes().size() + "     Number of Edges: " + view.getGraph().getEdges().size());
-                }
+        this.view.getGraph().addNodeCreatedListener((o, iNodeItemEventArgs) -> {
+            if (iNodeItemEventArgs.getItem() instanceof INode)
+            {
+                view.getGraph().addLabel((INode)iNodeItemEventArgs.getItem(), Integer.toString(view.getGraph().getNodes().size() - 1));
+                infoLabel.setText("Number of Vetrices: " + view.getGraph().getNodes().size() + "     Number of Edges: " + view.getGraph().getEdges().size());
             }
         });
 
-        this.view.getGraph().addEdgeCreatedListener(new IEventListener<ItemEventArgs<IEdge>>() {
-            @Override
-            public void onEvent(Object o, ItemEventArgs<IEdge> iNodeItemEventArgs) {
-                if (iNodeItemEventArgs.getItem() instanceof IEdge)
-                {
-                    infoLabel.setText("Number of Vetrices: " + view.getGraph().getNodes().size() + "     Number of Edges: " + view.getGraph().getEdges().size());
-                }
+        this.view.getGraph().addEdgeCreatedListener((o, iNodeItemEventArgs) -> {
+            if (iNodeItemEventArgs.getItem() instanceof IEdge)
+            {
+                infoLabel.setText("Number of Vetrices: " + view.getGraph().getNodes().size() + "     Number of Edges: " + view.getGraph().getEdges().size());
             }
         });
 
@@ -654,7 +640,7 @@ public class MainFrame extends JFrame {
         springEmbedderItem.addActionListener(this::springEmbedderItemActionPerformed);
         layoutMenu.add(springEmbedderItem);
 
-        /**
+        /*
         this.fppItem = new JMenuItem();
         this.fppItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
         this.fppItem.setText("De Fraysseix Pach Pollack");
@@ -664,7 +650,7 @@ public class MainFrame extends JFrame {
             }
         });
         this.layoutMenu.add(this.fppItem);
-        **/
+        */
 
         mainMenuBar.add(layoutMenu);
 
@@ -675,7 +661,7 @@ public class MainFrame extends JFrame {
     /*********************************************************************
      * Popup Menus
      ********************************************************************/
-    private void populateEdgePopupMenu(Object o, PopulateItemPopupMenuEventArgs<IModelItem> args) {
+    private void populateEdgePopupMenu(PopulateItemPopupMenuEventArgs<IModelItem> args) {
         ISelectionModel<IEdge> selection = this.view.getSelection().getSelectedEdges();
         if (args.getItem() instanceof IEdge) {
             IEdge edge = (IEdge) args.getItem();
@@ -697,7 +683,7 @@ public class MainFrame extends JFrame {
         }
     }
     
-    private void populateNodePopupMenu(Object o, PopulateItemPopupMenuEventArgs<IModelItem> args)
+    private void populateNodePopupMenu(PopulateItemPopupMenuEventArgs<IModelItem> args)
     {
         ISelectionModel<INode> selection = this.view.getSelection().getSelectedNodes();
         if (args.getItem() instanceof INode) {
@@ -729,6 +715,54 @@ public class MainFrame extends JFrame {
             popupMenu.add(removeVertex);
             args.setHandled(true);
         }
+    }
+
+    /**
+     * Returns the defualt node style
+     * @return default node style
+     */
+    public ShinyPlateNodeStyle getDefaultNodeStyle() {
+        return defaultNodeStyle;
+    }
+
+    /**
+     * Sets the default node style
+     * @param defaultNodeStyle new style
+     */
+    public void setDefaultNodeStyle(ShinyPlateNodeStyle defaultNodeStyle) {
+        this.defaultNodeStyle = defaultNodeStyle;
+    }
+
+    /**
+     * Returns the defualt edge style
+     * @return default edge style
+     */
+    public PolylineEdgeStyle getDefaultEdgeStyle() {
+        return defaultEdgeStyle;
+    }
+
+    /**
+     * Sets the default edge style
+     * @param defaultEdgeStyle new style
+     */
+    public void setDefaultEdgeStyle(PolylineEdgeStyle defaultEdgeStyle) {
+        this.defaultEdgeStyle = defaultEdgeStyle;
+    }
+
+    /**
+     * Returns the defualt label style
+     * @return default label style
+     */
+    public SimpleLabelStyle getDefaultLabelStyle() {
+        return defaultLabelStyle;
+    }
+
+    /**
+     * Sets the default label style
+     * @param defaultLabelStyle new style
+     */
+    public void setDefaultLabelStyle(SimpleLabelStyle defaultLabelStyle) {
+        this.defaultLabelStyle = defaultLabelStyle;
     }
 
     /*********************************************************************
@@ -769,8 +803,8 @@ public class MainFrame extends JFrame {
                 progressBar.setValue(evt.currentStatus());
             }
         });
-        this.thread = new Thread(fd);
-        this.thread.start();
+        Thread thread = new Thread(fd);
+        thread.start();
         this.view.updateUI();
     }
 
@@ -1150,7 +1184,7 @@ public class MainFrame extends JFrame {
                 this.view.importFromGraphML(fileNamePath);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
-                this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+                this.fileNamePathFolder = chooser.getSelectedFile().getParent();
 
             } catch (IOException ioe) {
                 this.infoLabel.setText("An error occured while reading the input file.");
@@ -1199,7 +1233,7 @@ public class MainFrame extends JFrame {
                 if (!this.fileNamePath.toLowerCase().endsWith(".graphml")) {
                     this.fileNamePath = this.fileNamePath + ".graphml";
                 }
-                this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+                this.fileNamePathFolder = chooser.getSelectedFile().getParent();
 
                 try {
                     this.view.exportToGraphML(this.fileNamePath);
@@ -1228,7 +1262,7 @@ public class MainFrame extends JFrame {
             if (!this.fileNamePath.toLowerCase().endsWith(".graphml")) {
                 this.fileNamePath = this.fileNamePath + ".graphml";
             }
-            this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+            this.fileNamePathFolder = chooser.getSelectedFile().getParent();
 
             try {
                 this.view.exportToGraphML(this.fileNamePath);
@@ -1252,11 +1286,7 @@ public class MainFrame extends JFrame {
         }
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new MainFrame().setVisible(true);
-            }
-        });
+        java.awt.EventQueue.invokeLater(() -> new MainFrame().setVisible(true));
     }
 
     private void jpgItemActionPerformed(ActionEvent evt) {
@@ -1281,7 +1311,7 @@ public class MainFrame extends JFrame {
 
             try {
                 exporter.export(this.view, new FileOutputStream(fileName), "jpg");
-                this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+                this.fileNamePathFolder = chooser.getSelectedFile().getParent();
             } catch (IOException ioe) {
                 this.infoLabel.setText("An error occured which exporting the graph.");
             }
@@ -1310,7 +1340,7 @@ public class MainFrame extends JFrame {
 
             try {
                 exporter.export(this.view, new FileOutputStream(fileName), "gif");
-                this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+                this.fileNamePathFolder = chooser.getSelectedFile().getParent();
             } catch (IOException ioe) {
                 this.infoLabel.setText("An error occured which exporting the graph.");
             }
@@ -1335,7 +1365,7 @@ public class MainFrame extends JFrame {
                 fileName = fileName + ".amf";
             }
             try {
-                new ChristianIOHandler().write(new YGraphAdapter(view.getGraph()).getYGraph(), fileName);
+                ChristianIOHandler.write(new YGraphAdapter(view.getGraph()).getYGraph(), fileName);
             }
             catch (IOException exc)
             {
@@ -1362,7 +1392,7 @@ public class MainFrame extends JFrame {
                 fileName = fileName + ".edges";
             }
             try {
-                new SergeyIOHandler().write(new YGraphAdapter(view.getGraph()).getYGraph(), fileName);
+                SergeyIOHandler.write(new YGraphAdapter(view.getGraph()).getYGraph(), fileName);
             }
             catch (IOException exc)
             {
@@ -1386,14 +1416,12 @@ public class MainFrame extends JFrame {
         if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION)
         {
             this.fileNamePath = chooser.getSelectedFile().toString();
-            this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
-
-            ChristianIOHandler ioh = new ChristianIOHandler();
+            this.fileNamePathFolder = chooser.getSelectedFile().getParent();
 
             try {
                 view.getGraph().clear();
 
-                Graph g = ioh.read(this.fileNamePath);
+                Graph g = ChristianIOHandler.read(this.fileNamePath);
                 INodeMap map = g.createNodeMap();
 
                 for (INodeCursor nc = g.getNodeCursor(); nc.ok(); nc.next())
@@ -1431,14 +1459,12 @@ public class MainFrame extends JFrame {
         if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION)
         {
             this.fileNamePath = chooser.getSelectedFile().toString();
-            this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
-
-            SergeyIOHandler ioh = new SergeyIOHandler();
+            this.fileNamePathFolder = chooser.getSelectedFile().getParent();
 
             try {
                 this.view.getGraph().clear();
 
-                Graph g = ioh.read(this.fileNamePath);
+                Graph g = SergeyIOHandler.read(this.fileNamePath);
                 INodeMap map = g.createNodeMap();
 
                 for (INodeCursor nc = g.getNodeCursor(); nc.ok(); nc.next())
