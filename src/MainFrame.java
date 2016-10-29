@@ -141,18 +141,21 @@ public class MainFrame extends JFrame {
         });
         this.view.setInputMode(this.graphEditorInputMode);
 
-        /* Add two listeners two the graph */
+        /* Add four listeners two the graph */
         this.graph.addNodeCreatedListener((o, iNodeItemEventArgs) -> {
-            if (iNodeItemEventArgs.getItem() instanceof INode) {
-                graph.addLabel((INode) iNodeItemEventArgs.getItem(), Integer.toString(graph.getNodes().size() - 1));
-                infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
-            }
+            graph.addLabel(iNodeItemEventArgs.getItem(), Integer.toString(graph.getNodes().size() - 1));
+            infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
         });
 
         this.graph.addEdgeCreatedListener((o, iNodeItemEventArgs) -> {
-            if (iNodeItemEventArgs.getItem() instanceof IEdge) {
-                infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
-            }
+            infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
+        });
+        this.graph.addNodeRemovedListener((o, iNodeItemEventArgs) -> {
+            infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
+        });
+
+        this.graph.addEdgeRemovedListener((o, iNodeItemEventArgs) -> {
+            infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
         });
 
         /* Add two listeners two the graph */
