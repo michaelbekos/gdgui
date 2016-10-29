@@ -13,15 +13,13 @@ import com.yworks.yfiles.layout.organic.OrganicLayout;
 import com.yworks.yfiles.layout.orthogonal.OrthogonalLayout;
 import com.yworks.yfiles.layout.tree.TreeLayout;
 import com.yworks.yfiles.utils.IEventListener;
+import com.yworks.yfiles.utils.IList;
 import com.yworks.yfiles.utils.ItemEventArgs;
 import com.yworks.yfiles.view.*;
 import com.yworks.yfiles.view.export.CanvasPrintable;
 import com.yworks.yfiles.view.export.ContextConfigurator;
 import com.yworks.yfiles.view.export.PixelImageExporter;
-import com.yworks.yfiles.view.input.GraphEditorInputMode;
-import com.yworks.yfiles.view.input.GraphSnapContext;
-import com.yworks.yfiles.view.input.GridConstraintProvider;
-import com.yworks.yfiles.view.input.GridSnapTypes;
+import com.yworks.yfiles.view.input.*;
 import io.ChristianIOHandler;
 import io.SergeyIOHandler;
 import layout.algo.ForceDirectedAlgorithm;
@@ -136,6 +134,19 @@ public class MainFrame extends JFrame {
         this.graphEditorInputMode.setCreateEdgeAllowed(true);
         this.graphEditorInputMode.setCreateBendAllowed(true);
         this.graphEditorInputMode.setEditLabelAllowed(true);
+        this.graphEditorInputMode.addPopulateItemPopupMenuListener(new IEventListener<PopulateItemPopupMenuEventArgs<IModelItem>>() {
+            @Override
+            public void onEvent(Object o, PopulateItemPopupMenuEventArgs<IModelItem> iModelItemPopulateItemPopupMenuEventArgs) {
+                if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof INode)
+                {
+                    populateNodePopupMenu(o, iModelItemPopulateItemPopupMenuEventArgs);
+                }
+                if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof IEdge)
+                {
+                    populateEdgePopupMenu(o, iModelItemPopulateItemPopupMenuEventArgs);
+                }
+            }
+        });
         this.view.setInputMode(this.graphEditorInputMode);
 
         /*********************************************************************
@@ -241,8 +252,8 @@ public class MainFrame extends JFrame {
         this.treeGraphItem.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_T, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
         this.treeGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png"))); // NOI18N
         this.treeGraphItem.setText("Tree Graph");
-        this.treeGraphItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.treeGraphItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 treeGraphItemActionPerformed(evt);
             }
         });
@@ -252,8 +263,8 @@ public class MainFrame extends JFrame {
         this.connectedGraphItem.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
         this.connectedGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png"))); // NOI18N
         this.connectedGraphItem.setText("Connected Graph");
-        this.connectedGraphItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.connectedGraphItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 connectedGraphItemActionPerformed(evt);
             }
         });
@@ -263,8 +274,8 @@ public class MainFrame extends JFrame {
         this.randomGraphItem.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
         this.randomGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png"))); // NOI18N
         this.randomGraphItem.setText("Random Graph");
-        this.randomGraphItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.randomGraphItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 randomGraphItemActionPerformed(evt);
             }
         });
@@ -277,8 +288,8 @@ public class MainFrame extends JFrame {
         this.openItem.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         this.openItem.setIcon(new ImageIcon(getClass().getResource("/resources/open-16.png"))); // NOI18N
         this.openItem.setText("Open");
-        this.openItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.openItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 openItemActionPerformed(evt);
             }
         });
@@ -288,8 +299,8 @@ public class MainFrame extends JFrame {
         this.reloadItem.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
         this.reloadItem.setIcon(new ImageIcon(getClass().getResource("/resources/reload-16.png"))); // NOI18N
         this.reloadItem.setText("Reload");
-        this.reloadItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.reloadItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 reloadItemActionPerformed(evt);
             }
         });
@@ -298,10 +309,10 @@ public class MainFrame extends JFrame {
 
         this.saveItem = new JMenuItem();
         this.saveItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
-        this.saveItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/save-16.png"))); // NOI18N
+        this.saveItem.setIcon(new ImageIcon(getClass().getResource("/resources/save-16.png"))); // NOI18N
         this.saveItem.setText("Save");
-        this.saveItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.saveItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 saveItemActionPerformed(evt);
             }
         });
@@ -309,78 +320,78 @@ public class MainFrame extends JFrame {
 
         this.saveAsItem = new JMenuItem();
         saveAsItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
-        saveAsItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/save-16.png"))); // NOI18N
+        saveAsItem.setIcon(new ImageIcon(getClass().getResource("/resources/save-16.png"))); // NOI18N
         saveAsItem.setText("Save As...");
-        saveAsItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        saveAsItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 saveAsItemActionPerformed();
             }
         });
         this.fileMenu.add(saveAsItem);
 
         this.exportMenu = new JMenu();
-        this.exportMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
+        this.exportMenu.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
         this.exportMenu.setText("Export");
 
         this.jpgItem = new JMenuItem();
-        this.jpgItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
+        this.jpgItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
         this.jpgItem.setText("Export to JPG");
-        this.jpgItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.jpgItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 jpgItemActionPerformed(evt);
             }
         });
         this.exportMenu.add(this.jpgItem);
 
         this.gifItem = new JMenuItem();
-        this.gifItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
+        this.gifItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
         this.gifItem.setText("Export to GIF");
-        this.gifItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.gifItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 gifItemActionPerformed(evt);
             }
         });
         this.exportMenu.add(this.gifItem);
 
         this.christianFormatItem = new JMenuItem();
-        this.christianFormatItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
+        this.christianFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
         this.christianFormatItem.setText("Export for Christian");
-        this.christianFormatItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.christianFormatItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 christianFormatItemActionPerformed(evt);
             }
         });
         this.exportMenu.add(this.christianFormatItem);
 
         this.sergeyFormatItem = new JMenuItem();
-        this.sergeyFormatItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
+        this.sergeyFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
         this.sergeyFormatItem.setText("Export for Sergey");
-        this.sergeyFormatItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.sergeyFormatItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 sergeyFormatItemActionPerformed(evt);
             }
         });
         this.exportMenu.add(this.sergeyFormatItem);
 
         this.importMenu = new JMenu();
-        this.importMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
+        this.importMenu.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
         this.importMenu.setText("Import");
 
         this.christianImportFormatItem = new JMenuItem();
-        this.christianImportFormatItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
+        this.christianImportFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
         this.christianImportFormatItem.setText("Import from Christian");
-        this.christianImportFormatItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.christianImportFormatItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 christianImportFormatItemActionPerformed(evt);
             }
         });
         this.importMenu.add(this.christianImportFormatItem);
 
         this.sergeyImportFormatItem = new JMenuItem();
-        this.sergeyImportFormatItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
+        this.sergeyImportFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png"))); // NOI18N
         this.sergeyImportFormatItem.setText("Import from Sergey");
-        this.sergeyImportFormatItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.sergeyImportFormatItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 sergeyImportFormatItemActionPerformed(evt);
             }
         });
@@ -392,10 +403,10 @@ public class MainFrame extends JFrame {
 
         this.printItem = new JMenuItem();
         this.printItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_P, java.awt.event.InputEvent.CTRL_MASK));
-        this.printItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/print-16.png"))); // NOI18N
+        this.printItem.setIcon(new ImageIcon(getClass().getResource("/resources/print-16.png"))); // NOI18N
         this.printItem.setText("Print");
-        this.printItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.printItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 printItemActionPerformed(evt);
             }
         });
@@ -404,10 +415,10 @@ public class MainFrame extends JFrame {
 
         this.quitItem = new JMenuItem();
         this.quitItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_MASK));
-        this.quitItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/exit-16.png"))); // NOI18N
+        this.quitItem.setIcon(new ImageIcon(getClass().getResource("/resources/exit-16.png"))); // NOI18N
         this.quitItem.setText("Quit");
-        this.quitItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.quitItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 System.exit(0);
             }
         });
@@ -424,19 +435,19 @@ public class MainFrame extends JFrame {
 
         this.undoItem = new JMenuItem();
         this.undoItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Z, java.awt.event.InputEvent.CTRL_MASK));
-        this.undoItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/undo-16.png"))); // NOI18N
+        this.undoItem.setIcon(new ImageIcon(getClass().getResource("/resources/undo-16.png"))); // NOI18N
         this.undoItem.setText("Undo");
-        this.undoItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) { undoItemActionPerformed(evt); }
+        this.undoItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) { undoItemActionPerformed(evt); }
         });
         this.editMenu.add(this.undoItem);
 
         this.redoItem = new JMenuItem();
         this.redoItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Y, java.awt.event.InputEvent.CTRL_MASK));
-        this.redoItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/redo-16.png"))); // NOI18N
+        this.redoItem.setIcon(new ImageIcon(getClass().getResource("/resources/redo-16.png"))); // NOI18N
         this.redoItem.setText("Redo");
-        this.redoItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.redoItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 redoItemActionPerformed(evt);
             }
         });
@@ -445,66 +456,66 @@ public class MainFrame extends JFrame {
 
         this.cutItem = new JMenuItem();
         this.cutItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_X, java.awt.event.InputEvent.CTRL_MASK));
-        this.cutItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/cut-16.png"))); // NOI18N
+        this.cutItem.setIcon(new ImageIcon(getClass().getResource("/resources/cut-16.png"))); // NOI18N
         this.cutItem.setText("Cut");
-        this.cutItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) { cutItemActionPerformed(evt); }
+        this.cutItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) { cutItemActionPerformed(evt); }
         });
         this.editMenu.add(this.cutItem);
 
         this.copyItem = new JMenuItem();
         this.copyItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_MASK));
-        this.copyItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/copy-16.png"))); // NOI18N
+        this.copyItem.setIcon(new ImageIcon(getClass().getResource("/resources/copy-16.png"))); // NOI18N
         this.copyItem.setText("Copy");
-        this.copyItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) { copyItemActionPerformed(evt); }
+        this.copyItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) { copyItemActionPerformed(evt); }
         });
         this.editMenu.add(this.copyItem);
 
         this.pasteItem = new JMenuItem();
         this.pasteItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_MASK));
-        this.pasteItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/paste-16.png"))); // NOI18N
+        this.pasteItem.setIcon(new ImageIcon(getClass().getResource("/resources/paste-16.png"))); // NOI18N
         this.pasteItem.setText("Paste");
-        this.pasteItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) { pasteItemActionPerformed(evt); }
+        this.pasteItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) { pasteItemActionPerformed(evt); }
         });
         this.editMenu.add(this.pasteItem);
         this.editMenu.add(new JSeparator());
 
         this.clearSelectedItem = new JMenuItem();
         this.clearSelectedItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE, 0));
-        this.clearSelectedItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/delete-16.png"))); // NOI18N
+        this.clearSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png"))); // NOI18N
         this.clearSelectedItem.setText("Clear Selected");
-        this.clearSelectedItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) { clearSelectedItemActionPerformed(evt); }
+        this.clearSelectedItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) { clearSelectedItemActionPerformed(evt); }
         });
         this.editMenu.add(this.clearSelectedItem);
 
         this.clearAllItem = new JMenuItem();
         this.clearAllItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE, 0));
-        this.clearAllItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/delete-16.png"))); // NOI18N
+        this.clearAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png"))); // NOI18N
         this.clearAllItem.setText("Clear all");
-        this.clearAllItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) { clearAllItemActionPerformed(evt); }
+        this.clearAllItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) { clearAllItemActionPerformed(evt); }
         });
         this.editMenu.add(this.clearAllItem);
         this.editMenu.add(new JSeparator());
 
         this.selectAllItem = new JMenuItem();
         this.selectAllItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
-        this.selectAllItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/group-16.png"))); // NOI18N
+        this.selectAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/group-16.png"))); // NOI18N
         this.selectAllItem.setText("Select all");
-        this.selectAllItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) { selectAllItemActionPerformed(evt); }
+        this.selectAllItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) { selectAllItemActionPerformed(evt); }
         });
         this.editMenu.add(this.selectAllItem);
 
         this.deselectAllItem = new JMenuItem();
         this.deselectAllItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.SHIFT_MASK | java.awt.event.InputEvent.CTRL_MASK));
-        this.deselectAllItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/ungroup-16.png"))); // NOI18N
+        this.deselectAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/ungroup-16.png"))); // NOI18N
         this.deselectAllItem.setText("Deselect all");
-        this.deselectAllItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) { deselectAllItemActionPerformed(evt); }
+        this.deselectAllItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) { deselectAllItemActionPerformed(evt); }
         });
         this.editMenu.add(this.deselectAllItem);
 
@@ -519,10 +530,10 @@ public class MainFrame extends JFrame {
 
         this.zoomInItem = new JMenuItem();
         this.zoomInItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_PLUS, java.awt.event.InputEvent.CTRL_MASK));
-        this.zoomInItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/plus2-16.png"))); // NOI18N
+        this.zoomInItem.setIcon(new ImageIcon(getClass().getResource("/resources/plus2-16.png"))); // NOI18N
         this.zoomInItem.setText("Zoom In");
-        this.zoomInItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.zoomInItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 zoomInItemActionPerformed(evt);
             }
         });
@@ -530,10 +541,10 @@ public class MainFrame extends JFrame {
 
         this.zoomOutItem = new JMenuItem();
         this.zoomOutItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_MINUS, java.awt.event.InputEvent.CTRL_MASK));
-        this.zoomOutItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/minus2-16.png"))); // NOI18N
+        this.zoomOutItem.setIcon(new ImageIcon(getClass().getResource("/resources/minus2-16.png"))); // NOI18N
         this.zoomOutItem.setText("Zoom Out");
-        this.zoomOutItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.zoomOutItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 zoomOutItemActionPerformed(evt);
             }
         });
@@ -541,10 +552,10 @@ public class MainFrame extends JFrame {
 
         this.fitContentItem = new JMenuItem();
         this.fitContentItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_EQUALS, java.awt.event.InputEvent.CTRL_MASK));
-        this.fitContentItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/zoom-original2-16.png"))); // NOI18N
+        this.fitContentItem.setIcon(new ImageIcon(getClass().getResource("/resources/zoom-original2-16.png"))); // NOI18N
         this.fitContentItem.setText("Fit Content");
-        this.fitContentItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.fitContentItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 fitContentItemActionPerformed(evt);
             }
         });
@@ -552,16 +563,16 @@ public class MainFrame extends JFrame {
         this.viewMenu.add(new JSeparator());
 
         this.toolsMenu = new JMenu();
-        this.toolsMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.toolsMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.toolsMenu.setText("Actions and Tools");
 
         /**
         this.triangulateItem = new JMenuItem();
         this.triangulateItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_T, java.awt.event.InputEvent.CTRL_MASK));
-        this.triangulateItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Tool.png"))); // NOI18N
+        this.triangulateItem.setIcon(new ImageIcon(getClass().getResource("/resources/Tool.png"))); // NOI18N
         this.triangulateItem.setText("Triangulate Planar Graph");
-        this.triangulateItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.triangulateItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 triangulateItemActionPerformed(evt);
             }
         });
@@ -570,10 +581,10 @@ public class MainFrame extends JFrame {
 
         this.mergeSelectedItem = new JMenuItem();
         this.mergeSelectedItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_M, java.awt.event.InputEvent.CTRL_MASK));
-        this.mergeSelectedItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.mergeSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.mergeSelectedItem.setText("Merge Selected Nodes");
-        this.mergeSelectedItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.mergeSelectedItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 mergeSelectedItemActionPerformed(evt);
             }
         });
@@ -581,10 +592,10 @@ public class MainFrame extends JFrame {
 
         this.stellateSelectedItem = new JMenuItem();
         this.stellateSelectedItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.ALT_MASK));
-        this.stellateSelectedItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.stellateSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.stellateSelectedItem.setText("Stellate Selected Nodes");
-        this.stellateSelectedItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.stellateSelectedItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 stellateSelectedItemActionPerformed(evt);
             }
         });
@@ -592,20 +603,20 @@ public class MainFrame extends JFrame {
 
         /**
         nodeToQuadrangleItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.ALT_MASK));
-        nodeToQuadrangleItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        nodeToQuadrangleItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         nodeToQuadrangleItem.setText("Selected Nodes To Quadrangle");
-        nodeToQuadrangleItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        nodeToQuadrangleItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 nodeToQuadrangleItemActionPerformed(evt);
             }
         });
         toolsMenu.add(nodeToQuadrangleItem);
 
 
-        onePlanarAugmentorItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        onePlanarAugmentorItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         onePlanarAugmentorItem.setText("Augment By 2-hops");
-        onePlanarAugmentorItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        onePlanarAugmentorItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 onePlanarAugmentorItemActionPerformed(evt);
             }
         });
@@ -614,10 +625,10 @@ public class MainFrame extends JFrame {
 
         this.subdivideSelectedItem = new JMenuItem();
         this.subdivideSelectedItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_D, java.awt.event.InputEvent.CTRL_MASK));
-        this.subdivideSelectedItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.subdivideSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.subdivideSelectedItem.setText("Subdivide Selected Edges");
-        this.subdivideSelectedItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.subdivideSelectedItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 subdivideSelectedItemActionPerformed(evt);
             }
         });
@@ -625,54 +636,54 @@ public class MainFrame extends JFrame {
 
         this.gridItem = new JMenuItem();
         this.gridItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_MASK));
-        this.gridItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/grid-16.png"))); // NOI18N
+        this.gridItem.setIcon(new ImageIcon(getClass().getResource("/resources/grid-16.png"))); // NOI18N
         this.gridItem.setText("Grid");
-        this.gridItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.gridItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 gridItemActionPerformed(evt);
             }
         });
         this.viewMenu.add(this.gridItem);
 
         this.geometricTranformationsMenu = new JMenu();
-        this.geometricTranformationsMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.geometricTranformationsMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.geometricTranformationsMenu.setText("Geometric Tranformations");
 
         this.scaleItem = new JMenuItem();
-        this.scaleItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.scaleItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.scaleItem.setText("Scale");
-        this.scaleItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.scaleItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 scaleItemActionPerformed(evt);
             }
         });
         this.geometricTranformationsMenu.add(this.scaleItem);
 
         this.rotateItem = new JMenuItem();
-        this.rotateItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.rotateItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.rotateItem.setText("Rotate");
-        this.rotateItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.rotateItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 rotateItemActionPerformed(evt);
             }
         });
         this.geometricTranformationsMenu.add(this.rotateItem);
 
         this.mirrorXItem = new JMenuItem();
-        this.mirrorXItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.mirrorXItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.mirrorXItem.setText("X-Axis Mirror");
-        this.mirrorXItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.mirrorXItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 mirrorXItemActionPerformed(evt);
             }
         });
         this.geometricTranformationsMenu.add(this.mirrorXItem);
 
         this.mirrorYItem = new JMenuItem();
-        this.mirrorYItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.mirrorYItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.mirrorYItem.setText("Y-Axis Mirror");
-        this.mirrorYItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.mirrorYItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 mirrorYItemActionPerformed(evt);
             }
         });
@@ -681,74 +692,74 @@ public class MainFrame extends JFrame {
         this.viewMenu.add(new JSeparator());
 
         this.analyzeMenu = new JMenu();
-        this.analyzeMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.analyzeMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.analyzeMenu.setText("Analyze Graph");
 
         this.planarityMenu = new JMenuItem();
-        this.planarityMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.planarityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.planarityMenu.setText("Planarity");
-        this.planarityMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.planarityMenu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 planarityMenuActionPerformed(evt);
             }
         });
         this.analyzeMenu.add(this.planarityMenu);
 
         this.acyclicnessMenu = new JMenuItem();
-        this.acyclicnessMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.acyclicnessMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.acyclicnessMenu.setText("Acyclicness");
-        this.acyclicnessMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.acyclicnessMenu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 acyclicnessMenuActionPerformed(evt);
             }
         });
         this.analyzeMenu.add(this.acyclicnessMenu);
 
         this.connectivityMenu = new JMenuItem();
-        this.connectivityMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.connectivityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.connectivityMenu.setText("Connectivity");
-        this.connectivityMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.connectivityMenu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 connectivityMenuActionPerformed(evt);
             }
         });
         this.analyzeMenu.add(this.connectivityMenu);
 
         this.biconnectivityMenu = new JMenuItem();
-        this.biconnectivityMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.biconnectivityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.biconnectivityMenu.setText("Biconnectivity");
-        this.biconnectivityMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.biconnectivityMenu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 biconnectivityMenuActionPerformed(evt);
             }
         });
         this.analyzeMenu.add(this.biconnectivityMenu);
 
         this.maxDegreeMenu = new JMenuItem();
-        this.maxDegreeMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.maxDegreeMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.maxDegreeMenu.setText("Maximum Degree");
-        this.maxDegreeMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.maxDegreeMenu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 maxDegreeMenuActionPerformed(evt);
             }
         });
         this.analyzeMenu.add(this.maxDegreeMenu);
 
         this.bipartitenessMenu = new JMenuItem();
-        this.bipartitenessMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.bipartitenessMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.bipartitenessMenu.setText("Bipartiteness");
-        this.bipartitenessMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.bipartitenessMenu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 bipartitenessMenuActionPerformed(evt);
             }
         });
         this.analyzeMenu.add(this.bipartitenessMenu);
 
         this.stNumberingMenu = new JMenuItem();
-        this.stNumberingMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
+        this.stNumberingMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png"))); // NOI18N
         this.stNumberingMenu.setText("st-Numbering");
-        this.stNumberingMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.stNumberingMenu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 stNumberingMenuActionPerformed(evt);
             }
         });
@@ -768,40 +779,40 @@ public class MainFrame extends JFrame {
         this.layoutMenu.setText("Layout");
 
         this.orthogonalItem = new JMenuItem();
-        this.orthogonalItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
+        this.orthogonalItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
         this.orthogonalItem.setText("Orthogonal");
-        this.orthogonalItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.orthogonalItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 orthogonalItemActionPerformed(evt);
             }
         });
         this.layoutMenu.add(this.orthogonalItem);
 
         this.circularItem = new JMenuItem();
-        this.circularItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
+        this.circularItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
         this.circularItem.setText("Circular");
-        this.circularItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.circularItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 circularItemActionPerformed(evt);
             }
         });
         this.layoutMenu.add(this.circularItem);
 
         this.treeItem = new JMenuItem();
-        this.treeItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
+        this.treeItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
         this.treeItem.setText("Tree");
-        this.treeItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.treeItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 treeItemActionPerformed(evt);
             }
         });
         this.layoutMenu.add(this.treeItem);
 
         this.organicItem = new JMenuItem();
-        this.organicItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
+        this.organicItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
         this.organicItem.setText("Organic");
-        this.organicItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.organicItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 organicItemActionPerformed(evt);
             }
         });
@@ -809,10 +820,10 @@ public class MainFrame extends JFrame {
         this.layoutMenu.add(new JSeparator());
 
         this.springEmbedderItem = new JMenuItem();
-        this.springEmbedderItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
+        this.springEmbedderItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
         this.springEmbedderItem.setText("Spring Embedder");
-        this.springEmbedderItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.springEmbedderItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 springEmbedderItemActionPerformed(evt);
             }
         });
@@ -820,10 +831,10 @@ public class MainFrame extends JFrame {
 
         /**
         this.fppItem = new JMenuItem();
-        this.fppItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
+        this.fppItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png"))); // NOI18N
         this.fppItem.setText("De Fraysseix Pach Pollack");
-        this.fppItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        this.fppItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 fppItemActionPerformed(evt);
             }
         });
@@ -833,6 +844,72 @@ public class MainFrame extends JFrame {
         this.mainMenuBar.add(this.layoutMenu);
 
         super.setJMenuBar(this.mainMenuBar);
+    }
+
+    private void populateEdgePopupMenu(Object o, PopulateItemPopupMenuEventArgs<IModelItem> args) {
+        ISelectionModel<IEdge> selection = this.view.getSelection().getSelectedEdges();
+        if (args.getItem() instanceof IEdge) {
+            IEdge edge = (IEdge) args.getItem();
+            selection.clear();
+            selection.setSelected(edge, true);
+            this.view.setCurrentItem(edge);
+
+            JPopupMenu popupMenu = (JPopupMenu) args.getMenu();
+
+            javax.swing.JMenuItem removeVertex = new javax.swing.JMenuItem("Delete");
+            removeVertex.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
+            removeVertex.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent evt) {
+                    view.getGraph().remove(edge);
+                    view.updateUI();
+                }
+            });
+
+            popupMenu.add(removeVertex);
+            args.setHandled(true);
+        }
+    }
+
+
+    /*********************************************************************
+     * Popup Menus
+     ********************************************************************/
+    private void populateNodePopupMenu(Object o, PopulateItemPopupMenuEventArgs<IModelItem> args)
+    {
+        ISelectionModel<INode> selection = this.view.getSelection().getSelectedNodes();
+        if (args.getItem() instanceof INode) {
+            INode node = (INode) args.getItem();
+            selection.clear();
+            selection.setSelected(node, true);
+            this.view.setCurrentItem(node);
+
+            JPopupMenu popupMenu = (JPopupMenu) args.getMenu();
+
+            JMenuItem editLabel = new JMenuItem(node.getLabels().first().equals("") ? "Add Label" : "Edit Label");
+            editLabel.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+            editLabel.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent evt) {
+                    JTextField labelTextField = new JTextField(node.getLabels().first().getText());
+                    int result = JOptionPane.showOptionDialog(null, new Object[]{"Label: ", labelTextField}, (node.getLabels().first().equals("") ? "Add Label" : "Edit Label"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+                    if (result == JOptionPane.OK_OPTION) {
+                        view.getGraph().setLabelText(node.getLabels().first(), labelTextField.getText());
+                    }
+                }
+            });
+
+            javax.swing.JMenuItem removeVertex = new javax.swing.JMenuItem("Delete");
+            removeVertex.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
+            removeVertex.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent evt) {
+                    view.getGraph().remove(node);
+                    view.updateUI();
+                }
+            });
+
+            popupMenu.add(editLabel);
+            popupMenu.add(removeVertex);
+            args.setHandled(true);
+        }
     }
 
     /*********************************************************************
@@ -1424,7 +1501,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void christianFormatItemActionPerformed(java.awt.event.ActionEvent evt) {
+    private void christianFormatItemActionPerformed(ActionEvent evt) {
         JFileChooser chooser = new JFileChooser(fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
@@ -1451,7 +1528,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void sergeyFormatItemActionPerformed(java.awt.event.ActionEvent evt) {
+    private void sergeyFormatItemActionPerformed(ActionEvent evt) {
         JFileChooser chooser = new JFileChooser(fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
@@ -1478,7 +1555,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void christianImportFormatItemActionPerformed(java.awt.event.ActionEvent evt) {
+    private void christianImportFormatItemActionPerformed(ActionEvent evt) {
         JFileChooser chooser = new JFileChooser(fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
@@ -1523,7 +1600,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void sergeyImportFormatItemActionPerformed(java.awt.event.ActionEvent evt) {
+    private void sergeyImportFormatItemActionPerformed(ActionEvent evt) {
         JFileChooser chooser = new JFileChooser(fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
