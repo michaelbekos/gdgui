@@ -46,6 +46,7 @@ public class MainFrame extends JFrame {
 
     /* Graph Drawing related objects */
     private GraphComponent view;
+    private IGraph graph;
     private OrganicLayout defaultLayouter;
     private GraphEditorInputMode graphEditorInputMode;
     private GridVisualCreator gridVisualCreator;
@@ -54,7 +55,7 @@ public class MainFrame extends JFrame {
 
     /* Default Styles */
     private ShinyPlateNodeStyle defaultNodeStyle;
-    private PolylineEdgeStyle   defaultEdgeStyle;
+    private PolylineEdgeStyle defaultEdgeStyle;
     private SimpleLabelStyle defaultLabelStyle;
 
     /* Object that keeps track of the latest open/saved file */
@@ -81,7 +82,7 @@ public class MainFrame extends JFrame {
         //this.setLocation(x, y);
 
         super.setTitle("Graph Drawing Tool");
-        super.setMinimumSize(new Dimension(400,300));
+        super.setMinimumSize(new Dimension(400, 300));
         super.setExtendedState(MAXIMIZED_BOTH);
         super.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         super.addWindowListener(new WindowAdapter() {
@@ -119,9 +120,11 @@ public class MainFrame extends JFrame {
 
         this.view = new GraphComponent();
         this.view.setSize(330, 330);
-        mainPanel.add(this.view, BorderLayout.CENTER);
         this.view.requestFocus();
-        this.view.getGraph().setUndoEngineEnabled(true);
+        mainPanel.add(this.view, BorderLayout.CENTER);
+
+        this.graph = this.view.getGraph();
+        this.graph.setUndoEngineEnabled(true);
 
         this.graphEditorInputMode = new GraphEditorInputMode();
         this.graphEditorInputMode.setCreateNodeAllowed(true);
@@ -129,30 +132,26 @@ public class MainFrame extends JFrame {
         this.graphEditorInputMode.setCreateBendAllowed(true);
         this.graphEditorInputMode.setEditLabelAllowed(true);
         this.graphEditorInputMode.addPopulateItemPopupMenuListener((o, iModelItemPopulateItemPopupMenuEventArgs) -> {
-            if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof INode)
-            {
+            if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof INode) {
                 populateNodePopupMenu(iModelItemPopulateItemPopupMenuEventArgs);
             }
-            if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof IEdge)
-            {
+            if (iModelItemPopulateItemPopupMenuEventArgs.getItem() instanceof IEdge) {
                 populateEdgePopupMenu(iModelItemPopulateItemPopupMenuEventArgs);
             }
         });
         this.view.setInputMode(this.graphEditorInputMode);
 
         /* Add two listeners two the graph */
-        this.view.getGraph().addNodeCreatedListener((o, iNodeItemEventArgs) -> {
-            if (iNodeItemEventArgs.getItem() instanceof INode)
-            {
-                view.getGraph().addLabel((INode)iNodeItemEventArgs.getItem(), Integer.toString(view.getGraph().getNodes().size() - 1));
-                infoLabel.setText("Number of Vetrices: " + view.getGraph().getNodes().size() + "     Number of Edges: " + view.getGraph().getEdges().size());
+        this.graph.addNodeCreatedListener((o, iNodeItemEventArgs) -> {
+            if (iNodeItemEventArgs.getItem() instanceof INode) {
+                graph.addLabel((INode) iNodeItemEventArgs.getItem(), Integer.toString(graph.getNodes().size() - 1));
+                infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
             }
         });
 
-        this.view.getGraph().addEdgeCreatedListener((o, iNodeItemEventArgs) -> {
-            if (iNodeItemEventArgs.getItem() instanceof IEdge)
-            {
-                infoLabel.setText("Number of Vetrices: " + view.getGraph().getNodes().size() + "     Number of Edges: " + view.getGraph().getEdges().size());
+        this.graph.addEdgeCreatedListener((o, iNodeItemEventArgs) -> {
+            if (iNodeItemEventArgs.getItem() instanceof IEdge) {
+                infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
             }
         });
 
@@ -172,21 +171,21 @@ public class MainFrame extends JFrame {
         this.defaultNodeStyle.setPaint(Color.BLUE);
         this.defaultNodeStyle.setPen(new Pen(Color.BLACK, 1));
         this.defaultNodeStyle.setShadowDrawingEnabled(false);
-        this.view.getGraph().getNodeDefaults().setStyle(defaultNodeStyle);
-        this.view.getGraph().getDecorator().getNodeDecorator().getFocusIndicatorDecorator().hideImplementation();
-        this.view.getGraph().getNodeDefaults().setSize(new SizeD(30, 30));
+        this.graph.getNodeDefaults().setStyle(defaultNodeStyle);
+        this.graph.getDecorator().getNodeDecorator().getFocusIndicatorDecorator().hideImplementation();
+        this.graph.getNodeDefaults().setSize(new SizeD(30, 30));
 
         /* Default Edge Styling */
         this.defaultEdgeStyle = new PolylineEdgeStyle();
         this.defaultEdgeStyle.setPen(Pen.getBlack());
-        this.view.getGraph().getEdgeDefaults().setStyle(this.defaultEdgeStyle);
+        this.graph.getEdgeDefaults().setStyle(this.defaultEdgeStyle);
 
         /* Default Label Styling */
         this.defaultLabelStyle = new SimpleLabelStyle();
         this.defaultLabelStyle.setFont(new Font("Dialog", Font.PLAIN, 12));
         this.defaultLabelStyle.setTextPaint(Colors.WHITE);
-        this.view.getGraph().getNodeDefaults().getLabelDefaults().setStyle(this.defaultLabelStyle);
-        this.view.getGraph().getEdgeDefaults().getLabelDefaults().setStyle(this.defaultLabelStyle);
+        this.graph.getNodeDefaults().getLabelDefaults().setStyle(this.defaultLabelStyle);
+        this.graph.getEdgeDefaults().getLabelDefaults().setStyle(this.defaultLabelStyle);
 
         super.getContentPane().setLayout(new java.awt.BorderLayout(20, 20));
         super.getContentPane().add(mainPanel, java.awt.BorderLayout.CENTER);
@@ -196,8 +195,7 @@ public class MainFrame extends JFrame {
         this.defaultLayouter.setMinimumNodeDistance(100);
     }
 
-    private void initMenuBar()
-    {
+    private void initMenuBar() {
         JMenuBar mainMenuBar = new JMenuBar();
 
         /* File Menu */
@@ -651,7 +649,7 @@ public class MainFrame extends JFrame {
             javax.swing.JMenuItem removeVertex = new javax.swing.JMenuItem("Delete");
             removeVertex.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
             removeVertex.addActionListener(evt -> {
-                view.getGraph().remove(edge);
+                graph.remove(edge);
                 view.updateUI();
             });
 
@@ -659,9 +657,8 @@ public class MainFrame extends JFrame {
             args.setHandled(true);
         }
     }
-    
-    private void populateNodePopupMenu(PopulateItemPopupMenuEventArgs<IModelItem> args)
-    {
+
+    private void populateNodePopupMenu(PopulateItemPopupMenuEventArgs<IModelItem> args) {
         ISelectionModel<INode> selection = this.view.getSelection().getSelectedNodes();
         if (args.getItem() instanceof INode) {
             INode node = (INode) args.getItem();
@@ -677,14 +674,14 @@ public class MainFrame extends JFrame {
                 JTextField labelTextField = new JTextField(node.getLabels().first().getText());
                 int result = JOptionPane.showOptionDialog(null, new Object[]{"Label: ", labelTextField}, node.getLabels().first().getText().equals("") ? "Add Label" : "Edit Label", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
                 if (result == JOptionPane.OK_OPTION) {
-                    view.getGraph().setLabelText(node.getLabels().first(), labelTextField.getText());
+                    graph.setLabelText(node.getLabels().first(), labelTextField.getText());
                 }
             });
 
             javax.swing.JMenuItem removeVertex = new javax.swing.JMenuItem("Delete");
             removeVertex.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
             removeVertex.addActionListener(evt -> {
-                view.getGraph().remove(node);
+                graph.remove(node);
                 view.updateUI();
             });
 
@@ -696,6 +693,7 @@ public class MainFrame extends JFrame {
 
     /**
      * Returns the defualt node style
+     *
      * @return default node style
      */
     public ShinyPlateNodeStyle getDefaultNodeStyle() {
@@ -704,6 +702,7 @@ public class MainFrame extends JFrame {
 
     /**
      * Sets the default node style
+     *
      * @param defaultNodeStyle new style
      */
     public void setDefaultNodeStyle(ShinyPlateNodeStyle defaultNodeStyle) {
@@ -712,6 +711,7 @@ public class MainFrame extends JFrame {
 
     /**
      * Returns the defualt edge style
+     *
      * @return default edge style
      */
     public PolylineEdgeStyle getDefaultEdgeStyle() {
@@ -720,6 +720,7 @@ public class MainFrame extends JFrame {
 
     /**
      * Sets the default edge style
+     *
      * @param defaultEdgeStyle new style
      */
     public void setDefaultEdgeStyle(PolylineEdgeStyle defaultEdgeStyle) {
@@ -728,6 +729,7 @@ public class MainFrame extends JFrame {
 
     /**
      * Returns the defualt label style
+     *
      * @return default label style
      */
     public SimpleLabelStyle getDefaultLabelStyle() {
@@ -736,6 +738,7 @@ public class MainFrame extends JFrame {
 
     /**
      * Sets the default label style
+     *
      * @param defaultLabelStyle new style
      */
     public void setDefaultLabelStyle(SimpleLabelStyle defaultLabelStyle) {
@@ -800,17 +803,14 @@ public class MainFrame extends JFrame {
     private void treeItemActionPerformed(ActionEvent evt) {
         try {
             LayoutUtilities.morphLayout(this.view, new TreeLayout(), Duration.ofSeconds(1), null);
-        }
-        catch (Exception exc)
-        {
+        } catch (Exception exc) {
             this.infoLabel.setText("The input graph is not a tree or a forest.");
         }
     }
 
     private void stNumberingMenuActionPerformed(ActionEvent evt) {
-        YGraphAdapter adapter = new YGraphAdapter(this.view.getGraph());
-        if (!GraphChecker.isBiconnected(adapter.getYGraph()))
-        {
+        YGraphAdapter adapter = new YGraphAdapter(this.graph);
+        if (!GraphChecker.isBiconnected(adapter.getYGraph())) {
             infoLabel.setText("The input graph is not biconnected.");
             return;
         }
@@ -818,12 +818,12 @@ public class MainFrame extends JFrame {
         for (INodeCursor nc = stOrder.nodes(); nc.ok(); nc.next()) {
             int st = stOrder.indexOf(nc.node()) + 1;
             INode original = adapter.getOriginalNode(nc.node());
-            this.view.getGraph().setLabelText(original.getLabels().first(), Integer.toString(st));
+            this.graph.setLabelText(original.getLabels().first(), Integer.toString(st));
         }
     }
 
     private void maxDegreeMenuActionPerformed(ActionEvent evt) {
-        YGraphAdapter adapter = new YGraphAdapter(this.view.getGraph());
+        YGraphAdapter adapter = new YGraphAdapter(this.graph);
         int maxDegree = 0;
         for (INodeCursor nc = adapter.getYGraph().getNodeCursor(); nc.ok(); nc.next()) {
             maxDegree = Math.max(maxDegree, nc.node().degree());
@@ -832,27 +832,27 @@ public class MainFrame extends JFrame {
     }
 
     private void bipartitenessMenuActionPerformed(ActionEvent evt) {
-        YGraphAdapter adapter = new YGraphAdapter(this.view.getGraph());
+        YGraphAdapter adapter = new YGraphAdapter(this.graph);
         this.infoLabel.setText("The input graph is " + (GraphChecker.isBipartite(adapter.getYGraph()) ? "" : " not") + " connected");
     }
 
     private void biconnectivityMenuActionPerformed(ActionEvent evt) {
-        YGraphAdapter adapter = new YGraphAdapter(this.view.getGraph());
+        YGraphAdapter adapter = new YGraphAdapter(this.graph);
         this.infoLabel.setText("The input graph is " + (GraphChecker.isBiconnected(adapter.getYGraph()) ? "" : " not") + " biconnected");
     }
 
     private void connectivityMenuActionPerformed(ActionEvent evt) {
-        YGraphAdapter adapter = new YGraphAdapter(this.view.getGraph());
+        YGraphAdapter adapter = new YGraphAdapter(this.graph);
         this.infoLabel.setText("The input graph is " + (GraphChecker.isConnected(adapter.getYGraph()) ? "" : " not") + " connected");
     }
 
     private void acyclicnessMenuActionPerformed(ActionEvent evt) {
-        YGraphAdapter adapter = new YGraphAdapter(this.view.getGraph());
+        YGraphAdapter adapter = new YGraphAdapter(this.graph);
         this.infoLabel.setText("The input graph is " + (GraphChecker.isAcyclic(adapter.getYGraph()) ? "" : " not") + " acyclic");
     }
 
     private void planarityMenuActionPerformed(ActionEvent evt) {
-        YGraphAdapter adapter = new YGraphAdapter(this.view.getGraph());
+        YGraphAdapter adapter = new YGraphAdapter(this.graph);
         this.infoLabel.setText("The input graph is " + (GraphChecker.isPlanar(adapter.getYGraph()) ? "" : " not") + " planar");
     }
 
@@ -904,31 +904,31 @@ public class MainFrame extends JFrame {
         ISelectionModel<IEdge> selection = this.view.getSelection().getSelectedEdges();
         List<IEdge> edgesToRemove = new ArrayList<>();
 
-        for (IEdge edge : selection) {
-            INode newNode = this.view.getGraph().createNode();
+        selection.forEach(edge -> {
+            INode newNode = this.graph.createNode();
 
-            this.view.getGraph().setNodeCenter(newNode, new PointD((edge.getSourceNode().getLayout().getCenter().x + edge.getTargetNode().getLayout().getCenter().x) / 2, (edge.getSourceNode().getLayout().getCenter().y + edge.getTargetNode().getLayout().getCenter().y) / 2));
-            this.view.getGraph().createEdge(edge.getSourceNode(), newNode);
-            this.view.getGraph().createEdge(edge.getTargetNode(), newNode);
+            final PointD sourceCenter = edge.getSourceNode().getLayout().getCenter();
+            final PointD targetCenter = edge.getTargetNode().getLayout().getCenter();
+
+            this.graph.setNodeCenter(newNode, new PointD((sourceCenter.x + targetCenter.x) / 2, (sourceCenter.y + targetCenter.y) / 2));
+            this.graph.createEdge(edge.getSourceNode(), newNode);
+            this.graph.createEdge(edge.getTargetNode(), newNode);
             edgesToRemove.add(edge);
-        }
+        });
 
-        for (IEdge edge : edgesToRemove) {
-            this.view.getGraph().remove(edge);
-        }
+        edgesToRemove.forEach(edge -> {
+            this.graph.remove(edge);
+        });
 
         //Update the view.
         view.updateUI();
     }
 
     private void gridItemActionPerformed(ActionEvent evt) {
-        if (this.isGridVisible)
-        {
+        if (this.isGridVisible) {
             this.isGridVisible = false;
             this.graphSnapContext.setGridSnapType(GridSnapTypes.NONE);
-        }
-        else
-        {
+        } else {
             this.isGridVisible = true;
             this.graphSnapContext.setGridSnapType(GridSnapTypes.GRID_POINTS);
         }
@@ -938,19 +938,20 @@ public class MainFrame extends JFrame {
 
     private void stellateSelectedItemActionPerformed(ActionEvent evt) {
         ISelectionModel<INode> selection = this.view.getSelection().getSelectedNodes();
+        final int selectionCount = selection.getCount();
 
-        if (selection.getCount() > 0)  //selected nodes present
-        {
-            INode base = view.getGraph().createNode();
+        if (selectionCount > 0) {
+            INode base = graph.createNode();
 
             double x = 0;
             double y = 0;
             for (INode node : selection) {
-                x += node.getLayout().getCenter().x;
-                y += node.getLayout().getCenter().y;
-                this.view.getGraph().createEdge(base, node);
+                final PointD center = node.getLayout().getCenter();
+                x += center.x;
+                y += center.y;
+                this.graph.createEdge(base, node);
             }
-            this.view.getGraph().setNodeCenter(base, new PointD(x/selection.getCount(), y/selection.getCount()));
+            this.graph.setNodeCenter(base, new PointD(x / selectionCount, y / selectionCount));
         }
     }
 
@@ -958,33 +959,28 @@ public class MainFrame extends JFrame {
         ISelectionModel<INode> selection = this.view.getSelection().getSelectedNodes();
         List<INode> nodesToRemove = new ArrayList<>();
 
-        if (selection.getCount() > 0)  //selected nodes present
+        if (selection.getCount() > 0) //selected nodes present
         {
             INode base = null;
 
-            for (INode node : selection)
-            {
-                if (base == null)
-                {
+            for (INode node : selection) {
+                if (base == null) {
                     base = node;
-                }
-                else
-                {
+                } else {
                     nodesToRemove.add(node);
                 }
-                for (INode neighbor : this.view.getGraph().neighbors(INode.class, node))
-                {
-                    if (this.view.getGraph().getEdge(base, neighbor)!=null && this.view.getGraph().getEdge(neighbor, base)!=null) {
-                        this.view.getGraph().createEdge(base, neighbor);
+                for (INode neighbor : this.graph.neighbors(INode.class, node)) {
+                    if (this.graph.getEdge(base, neighbor) != null && this.graph.getEdge(neighbor, base) != null) {
+                        this.graph.createEdge(base, neighbor);
                     }
                 }
 
             }
         }
 
-        for (INode node : nodesToRemove) {
-            this.view.getGraph().remove(node);
-        }
+        nodesToRemove.forEach(node -> {
+            this.graph.remove(node);
+        });
 
         //Update the view.
         this.view.updateUI();
@@ -995,11 +991,11 @@ public class MainFrame extends JFrame {
     }
 
     private void zoomOutItemActionPerformed(ActionEvent evt) {
-        this.view.setZoom(this.view.getZoom()-0.2);
+        this.view.setZoom(this.view.getZoom() - 0.2);
     }
 
     private void zoomInItemActionPerformed(ActionEvent evt) {
-        this.view.setZoom(this.view.getZoom()+0.2);
+        this.view.setZoom(this.view.getZoom() + 0.2);
     }
 
     private void deselectAllItemActionPerformed(ActionEvent evt) {
@@ -1011,7 +1007,7 @@ public class MainFrame extends JFrame {
     }
 
     private void clearAllItemActionPerformed(ActionEvent evt) {
-        this.view.getGraph().clear();
+        this.graph.clear();
     }
 
     private void clearSelectedItemActionPerformed(ActionEvent evt) {
@@ -1039,13 +1035,13 @@ public class MainFrame extends JFrame {
     }
 
     private void undoItemActionPerformed(ActionEvent evt) {
-        if(this.graphEditorInputMode.isUndoOperationsAllowed()) {
+        if (this.graphEditorInputMode.isUndoOperationsAllowed()) {
             this.graphEditorInputMode.undo();
         }
     }
 
     private void blankGraphItemGraphItemActionPerformed(ActionEvent evt) {
-        this.view.getGraph().clear();
+        this.graph.clear();
         this.view.updateUI();
     }
 
@@ -1068,8 +1064,8 @@ public class MainFrame extends JFrame {
                 rgg.setNodeCount(10);
                 rgg.setEdgeCount(9);
             } finally {
-                rgg.generate(this.view.getGraph());
-                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
+                rgg.generate(this.graph);
+                LayoutUtilities.applyLayout(this.graph, this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
             }
@@ -1096,17 +1092,16 @@ public class MainFrame extends JFrame {
                 rgg.setNodeCount(10);
                 rgg.setEdgeCount(10);
             } finally {
-                rgg.generate(this.view.getGraph());
+                rgg.generate(this.graph);
 
-                YGraphAdapter adapter = new YGraphAdapter(this.view.getGraph());
+                YGraphAdapter adapter = new YGraphAdapter(this.graph);
 
                 EdgeList edgeList = GraphConnectivity.makeConnected(adapter.getYGraph());
-                for (IEdgeCursor ec = edgeList.edges(); ec.ok(); ec.next())
-                {
-                    this.view.getGraph().createEdge(adapter.getOriginalNode(ec.edge().source()), adapter.getOriginalNode(ec.edge().target()));
+                for (IEdgeCursor ec = edgeList.edges(); ec.ok(); ec.next()) {
+                    this.graph.createEdge(adapter.getOriginalNode(ec.edge().source()), adapter.getOriginalNode(ec.edge().target()));
                 }
 
-                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
+                LayoutUtilities.applyLayout(this.graph, this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
             }
@@ -1133,8 +1128,8 @@ public class MainFrame extends JFrame {
                 rgg.setNodeCount(10);
                 rgg.setEdgeCount(10);
             } finally {
-                rgg.generate(this.view.getGraph());
-                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
+                rgg.generate(this.graph);
+                LayoutUtilities.applyLayout(this.graph, this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
             }
@@ -1170,10 +1165,9 @@ public class MainFrame extends JFrame {
     }
 
     private void reloadItemActionPerformed(ActionEvent evt) {
-        if (this.fileNamePath != null)
-        {
+        if (this.fileNamePath != null) {
             try {
-                this.view.getGraph().clear();
+                this.graph.clear();
                 this.view.importFromGraphML(this.fileNamePath);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
@@ -1186,8 +1180,7 @@ public class MainFrame extends JFrame {
     }
 
     private void saveItemActionPerformed(ActionEvent evt) {
-        if (this.fileNamePath != null)
-        {
+        if (this.fileNamePath != null) {
             try {
                 this.view.exportToGraphML(this.fileNamePath);
             } catch (IOException ioe) {
@@ -1342,10 +1335,8 @@ public class MainFrame extends JFrame {
                 fileName = fileName + ".amf";
             }
             try {
-                ChristianIOHandler.write(new YGraphAdapter(view.getGraph()).getYGraph(), fileName);
-            }
-            catch (IOException exc)
-            {
+                ChristianIOHandler.write(new YGraphAdapter(graph).getYGraph(), fileName);
+            } catch (IOException exc) {
                 this.infoLabel.setText("An error occured which exporting the graph.");
             }
         }
@@ -1369,10 +1360,8 @@ public class MainFrame extends JFrame {
                 fileName = fileName + ".edges";
             }
             try {
-                SergeyIOHandler.write(new YGraphAdapter(view.getGraph()).getYGraph(), fileName);
-            }
-            catch (IOException exc)
-            {
+                SergeyIOHandler.write(new YGraphAdapter(graph).getYGraph(), fileName);
+            } catch (IOException exc) {
                 this.infoLabel.setText("An error occured which exporting the graph.");
             }
         }
@@ -1390,28 +1379,25 @@ public class MainFrame extends JFrame {
             }
 
         });
-        if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION)
-        {
+        if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION) {
             this.fileNamePath = chooser.getSelectedFile().toString();
             this.fileNamePathFolder = chooser.getSelectedFile().getParent();
 
             try {
-                view.getGraph().clear();
+                graph.clear();
 
                 Graph g = ChristianIOHandler.read(this.fileNamePath);
                 INodeMap map = g.createNodeMap();
 
-                for (INodeCursor nc = g.getNodeCursor(); nc.ok(); nc.next())
-                {
-                    map.set(nc.node(), this.view.getGraph().createNode());
+                for (INodeCursor nc = g.getNodeCursor(); nc.ok(); nc.next()) {
+                    map.set(nc.node(), this.graph.createNode());
                 }
-                for (IEdgeCursor ec = g.getEdgeCursor(); ec.ok(); ec.next())
-                {
-                    this.view.getGraph().createEdge((INode) map.get(ec.edge().target()), (INode) map.get(ec.edge().source()));
+                for (IEdgeCursor ec = g.getEdgeCursor(); ec.ok(); ec.next()) {
+                    this.graph.createEdge((INode) map.get(ec.edge().target()), (INode) map.get(ec.edge().source()));
                 }
                 g.disposeNodeMap(map);
 
-                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
+                LayoutUtilities.applyLayout(this.graph, this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
 
@@ -1433,28 +1419,25 @@ public class MainFrame extends JFrame {
             }
 
         });
-        if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION)
-        {
+        if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION) {
             this.fileNamePath = chooser.getSelectedFile().toString();
             this.fileNamePathFolder = chooser.getSelectedFile().getParent();
 
             try {
-                this.view.getGraph().clear();
+                this.graph.clear();
 
                 Graph g = SergeyIOHandler.read(this.fileNamePath);
                 INodeMap map = g.createNodeMap();
 
-                for (INodeCursor nc = g.getNodeCursor(); nc.ok(); nc.next())
-                {
-                    map.set(nc.node(), view.getGraph().createNode());
+                for (INodeCursor nc = g.getNodeCursor(); nc.ok(); nc.next()) {
+                    map.set(nc.node(), graph.createNode());
                 }
-                for (IEdgeCursor ec = g.getEdgeCursor(); ec.ok(); ec.next())
-                {
-                    this.view.getGraph().createEdge((INode) map.get(ec.edge().target()), (INode) map.get(ec.edge().source()));
+                for (IEdgeCursor ec = g.getEdgeCursor(); ec.ok(); ec.next()) {
+                    this.graph.createEdge((INode) map.get(ec.edge().target()), (INode) map.get(ec.edge().source()));
                 }
                 g.disposeNodeMap(map);
 
-                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
+                LayoutUtilities.applyLayout(this.graph, this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
 
@@ -1466,11 +1449,9 @@ public class MainFrame extends JFrame {
 
 
     private void printItemActionPerformed(ActionEvent evt) {
-        CanvasPrintable printable = new CanvasPrintable(this.view);
         PrinterJob job = PrinterJob.getPrinterJob();
-        job.setPrintable(printable);
-        if (job.printDialog())
-        {
+        job.setPrintable(new CanvasPrintable(this.view));
+        if (job.printDialog()) {
             try {
                 job.print();
             } catch (PrinterException e) {
