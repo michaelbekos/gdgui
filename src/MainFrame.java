@@ -13,7 +13,6 @@ import com.yworks.yfiles.layout.organic.OrganicLayout;
 import com.yworks.yfiles.layout.orthogonal.OrthogonalLayout;
 import com.yworks.yfiles.layout.tree.TreeLayout;
 import com.yworks.yfiles.utils.IEventListener;
-import com.yworks.yfiles.utils.IList;
 import com.yworks.yfiles.utils.ItemEventArgs;
 import com.yworks.yfiles.view.*;
 import com.yworks.yfiles.view.export.CanvasPrintable;
@@ -26,6 +25,7 @@ import layout.algo.ForceDirectedAlgorithm;
 import layout.algo.ForceDirectedFactory;
 import layout.algo.event.AlgorithmEvent;
 import layout.algo.event.AlgorithmListener;
+import util.RandomGraphGenerator;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -47,7 +47,7 @@ import java.util.ArrayList;
  */
 public class MainFrame extends JFrame {
 
-    //Graph Drawing related objects
+    /* Graph Drawing related objects */
     private GraphComponent view;
     private OrganicLayout defaultLayouter;
     private GraphEditorInputMode graphEditorInputMode;
@@ -55,17 +55,21 @@ public class MainFrame extends JFrame {
     private GraphSnapContext graphSnapContext;
     private boolean isGridVisible;
 
-    //Default Styles
+    /* Default Styles */
     ShinyPlateNodeStyle defaultNodeStyle;
     PolylineEdgeStyle   defaultEdgeStyle;
     SimpleLabelStyle defaultLabelStyle;
 
-    //Object that keeps track of the latest open/saved file
+    /* Object that keeps track of the latest open/saved file */
     private String fileNamePath;
     private String fileNamePathFolder;
 
-    //Object invoked to run the algorithms
+    /* Object invoked to run the algorithms */
     private Thread thread;
+
+    /* Central gui elements */
+    private JLabel infoLabel;
+    private JProgressBar progressBar;
 
 
     /**
@@ -101,28 +105,28 @@ public class MainFrame extends JFrame {
      */
     private void initComponents() {
 
-        this.progressBarPanel = new JPanel();
-        this.progressBarPanel.setLayout(new GridLayout(1, 2, 10, 10));
+        JPanel progressBarPanel = new JPanel();
+        progressBarPanel.setLayout(new GridLayout(1, 2, 10, 10));
 
         this.infoLabel = new JLabel();
         this.infoLabel.setText("Number of Vertices: 0     Number of Edges: 0");
-        this.progressBarPanel.add(infoLabel);
+        progressBarPanel.add(infoLabel);
 
         this.progressBar = new JProgressBar();
         this.progressBar.setPreferredSize(new Dimension(250, 20));
         this.progressBar.setStringPainted(true);
-        this.progressBarPanel.add(this.progressBar);
+        progressBarPanel.add(this.progressBar);
 
-        this.mainPanel = new JPanel();
-        this.mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        this.mainPanel.setPreferredSize(new Dimension(300, 300));
-        this.mainPanel.setLayout(new BorderLayout(0, 10));
-        this.mainPanel.add(this.progressBarPanel, BorderLayout.PAGE_END);
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setPreferredSize(new Dimension(300, 300));
+        mainPanel.setLayout(new BorderLayout(0, 10));
+        mainPanel.add(progressBarPanel, BorderLayout.PAGE_END);
 
 
         this.view = new GraphComponent();
         this.view.setSize(330, 330);
-        this.mainPanel.add(this.view, BorderLayout.CENTER);
+        mainPanel.add(this.view, BorderLayout.CENTER);
         this.view.requestFocus();
         this.view.getGraph().setUndoEngineEnabled(true);
 
@@ -220,254 +224,254 @@ public class MainFrame extends JFrame {
 
     private void initMenuBar()
     {
-        this.mainMenuBar = new JMenuBar();
+        JMenuBar mainMenuBar = new JMenuBar();
 
         /*********************************************************************
          * File Menu
          ********************************************************************/
-        this.fileMenu = new JMenu();
-        this.fileMenu.setText("File");
-        this.mainMenuBar.add(this.fileMenu);
+        JMenu fileMenu = new JMenu();
+        fileMenu.setText("File");
+        mainMenuBar.add(fileMenu);
 
-        this.newMenuItem = new JMenu();
-        this.newMenuItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png")));
-        this.newMenuItem.setText("New");
+        JMenuItem newMenuItem = new JMenu();
+        newMenuItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png")));
+        newMenuItem.setText("New");
 
-        this.blankGraphItem = new JMenuItem();
-        this.blankGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
-        this.blankGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
-        this.blankGraphItem.setText("Blank Graph");
-        this.blankGraphItem.addActionListener(this::blankGraphItemGraphItemActionPerformed);
-        this.newMenuItem.add(this.blankGraphItem);
-        this.newMenuItem.add(new JPopupMenu.Separator());
+        JMenuItem blankGraphItem = new JMenuItem();
+        blankGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
+        blankGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
+        blankGraphItem.setText("Blank Graph");
+        blankGraphItem.addActionListener(this::blankGraphItemGraphItemActionPerformed);
+        newMenuItem.add(blankGraphItem);
+        newMenuItem.add(new JPopupMenu.Separator());
 
-        this.treeGraphItem = new JMenuItem();
-        this.treeGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
-        this.treeGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png")));
-        this.treeGraphItem.setText("Tree Graph");
-        this.treeGraphItem.addActionListener(this::treeGraphItemActionPerformed);
-        this.newMenuItem.add(this.treeGraphItem);
+        JMenuItem treeGraphItem = new JMenuItem();
+        treeGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
+        treeGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png")));
+        treeGraphItem.setText("Tree Graph");
+        treeGraphItem.addActionListener(this::treeGraphItemActionPerformed);
+        newMenuItem.add(treeGraphItem);
 
-        this.connectedGraphItem = new JMenuItem();
-        this.connectedGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
-        this.connectedGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png")));
-        this.connectedGraphItem.setText("Connected Graph");
-        this.connectedGraphItem.addActionListener(this::connectedGraphItemActionPerformed);
-        this.newMenuItem.add(this.connectedGraphItem);
+        JMenuItem connectedGraphItem = new JMenuItem();
+        connectedGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
+        connectedGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png")));
+        connectedGraphItem.setText("Connected Graph");
+        connectedGraphItem.addActionListener(this::connectedGraphItemActionPerformed);
+        newMenuItem.add(connectedGraphItem);
 
-        this.randomGraphItem = new JMenuItem();
-        this.randomGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
-        this.randomGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png")));
-        this.randomGraphItem.setText("Random Graph");
-        this.randomGraphItem.addActionListener(this::randomGraphItemActionPerformed);
-        this.newMenuItem.add(this.randomGraphItem);
+        JMenuItem randomGraphItem = new JMenuItem();
+        randomGraphItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
+        randomGraphItem.setIcon(new ImageIcon(getClass().getResource("/resources/new-document-16.png")));
+        randomGraphItem.setText("Random Graph");
+        randomGraphItem.addActionListener(this::randomGraphItemActionPerformed);
+        newMenuItem.add(randomGraphItem);
 
-        this.fileMenu.add(this.newMenuItem);
-        this.fileMenu.add(new JSeparator());
+        fileMenu.add(newMenuItem);
+        fileMenu.add(new JSeparator());
 
-        this.openItem = new JMenuItem();
-        this.openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
-        this.openItem.setIcon(new ImageIcon(getClass().getResource("/resources/open-16.png")));
-        this.openItem.setText("Open");
-        this.openItem.addActionListener(this::openItemActionPerformed);
-        this.fileMenu.add(this.openItem);
+        JMenuItem openItem = new JMenuItem();
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+        openItem.setIcon(new ImageIcon(getClass().getResource("/resources/open-16.png")));
+        openItem.setText("Open");
+        openItem.addActionListener(this::openItemActionPerformed);
+        fileMenu.add(openItem);
 
-        this.reloadItem = new JMenuItem();
-        this.reloadItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
-        this.reloadItem.setIcon(new ImageIcon(getClass().getResource("/resources/reload-16.png")));
-        this.reloadItem.setText("Reload");
-        this.reloadItem.addActionListener(this::reloadItemActionPerformed);
-        this.fileMenu.add(this.reloadItem);
-        this.fileMenu.add(new JSeparator());
+        JMenuItem reloadItem = new JMenuItem();
+        reloadItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
+        reloadItem.setIcon(new ImageIcon(getClass().getResource("/resources/reload-16.png")));
+        reloadItem.setText("Reload");
+        reloadItem.addActionListener(this::reloadItemActionPerformed);
+        fileMenu.add(reloadItem);
+        fileMenu.add(new JSeparator());
 
-        this.saveItem = new JMenuItem();
-        this.saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
-        this.saveItem.setIcon(new ImageIcon(getClass().getResource("/resources/save-16.png")));
-        this.saveItem.setText("Save");
-        this.saveItem.addActionListener(this::saveItemActionPerformed);
-        this.fileMenu.add(this.saveItem);
+        JMenuItem saveItem = new JMenuItem();
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+        saveItem.setIcon(new ImageIcon(getClass().getResource("/resources/save-16.png")));
+        saveItem.setText("Save");
+        saveItem.addActionListener(this::saveItemActionPerformed);
+        fileMenu.add(saveItem);
 
-        this.saveAsItem = new JMenuItem();
+        JMenuItem saveAsItem = new JMenuItem();
         saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
         saveAsItem.setIcon(new ImageIcon(getClass().getResource("/resources/save-16.png")));
         saveAsItem.setText("Save As...");
         saveAsItem.addActionListener(this::saveAsItemActionPerformed);
-        this.fileMenu.add(saveAsItem);
+        fileMenu.add(saveAsItem);
 
-        this.exportMenu = new JMenu();
-        this.exportMenu.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
-        this.exportMenu.setText("Export");
+        JMenu exportMenu = new JMenu();
+        exportMenu.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
+        exportMenu.setText("Export");
 
-        this.jpgItem = new JMenuItem();
-        this.jpgItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
-        this.jpgItem.setText("Export to JPG");
-        this.jpgItem.addActionListener(this::jpgItemActionPerformed);
-        this.exportMenu.add(this.jpgItem);
+        JMenuItem jpgItem = new JMenuItem();
+        jpgItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
+        jpgItem.setText("Export to JPG");
+        jpgItem.addActionListener(this::jpgItemActionPerformed);
+        exportMenu.add(jpgItem);
 
-        this.gifItem = new JMenuItem();
-        this.gifItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
-        this.gifItem.setText("Export to GIF");
-        this.gifItem.addActionListener(this::gifItemActionPerformed);
-        this.exportMenu.add(this.gifItem);
+        JMenuItem gifItem = new JMenuItem();
+        gifItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
+        gifItem.setText("Export to GIF");
+        gifItem.addActionListener(this::gifItemActionPerformed);
+        exportMenu.add(gifItem);
 
-        this.christianFormatItem = new JMenuItem();
-        this.christianFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
-        this.christianFormatItem.setText("Export for Christian");
-        this.christianFormatItem.addActionListener(this::christianFormatItemActionPerformed);
-        this.exportMenu.add(this.christianFormatItem);
+        JMenuItem christianFormatItem = new JMenuItem();
+        christianFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
+        christianFormatItem.setText("Export for Christian");
+        christianFormatItem.addActionListener(this::christianFormatItemActionPerformed);
+        exportMenu.add(christianFormatItem);
 
-        this.sergeyFormatItem = new JMenuItem();
-        this.sergeyFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
-        this.sergeyFormatItem.setText("Export for Sergey");
-        this.sergeyFormatItem.addActionListener(this::sergeyFormatItemActionPerformed);
-        this.exportMenu.add(this.sergeyFormatItem);
+        JMenuItem sergeyFormatItem = new JMenuItem();
+        sergeyFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
+        sergeyFormatItem.setText("Export for Sergey");
+        sergeyFormatItem.addActionListener(this::sergeyFormatItemActionPerformed);
+        exportMenu.add(sergeyFormatItem);
 
-        this.importMenu = new JMenu();
-        this.importMenu.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
-        this.importMenu.setText("Import");
+        JMenu importMenu = new JMenu();
+        importMenu.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
+        importMenu.setText("Import");
 
-        this.christianImportFormatItem = new JMenuItem();
-        this.christianImportFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
-        this.christianImportFormatItem.setText("Import from Christian");
-        this.christianImportFormatItem.addActionListener(this::christianImportFormatItemActionPerformed);
-        this.importMenu.add(this.christianImportFormatItem);
+        JMenuItem christianImportFormatItem = new JMenuItem();
+        christianImportFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
+        christianImportFormatItem.setText("Import from Christian");
+        christianImportFormatItem.addActionListener(this::christianImportFormatItemActionPerformed);
+        importMenu.add(christianImportFormatItem);
 
-        this.sergeyImportFormatItem = new JMenuItem();
-        this.sergeyImportFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
-        this.sergeyImportFormatItem.setText("Import from Sergey");
-        this.sergeyImportFormatItem.addActionListener(this::sergeyImportFormatItemActionPerformed);
-        this.importMenu.add(this.sergeyImportFormatItem);
+        JMenuItem sergeyImportFormatItem = new JMenuItem();
+        sergeyImportFormatItem.setIcon(new ImageIcon(getClass().getResource("/resources/export-image-16.png")));
+        sergeyImportFormatItem.setText("Import from Sergey");
+        sergeyImportFormatItem.addActionListener(this::sergeyImportFormatItemActionPerformed);
+        importMenu.add(sergeyImportFormatItem);
 
-        this.fileMenu.add(this.exportMenu);
-        this.fileMenu.add(this.importMenu);
-        this.fileMenu.add(new JSeparator());
+        fileMenu.add(exportMenu);
+        fileMenu.add(importMenu);
+        fileMenu.add(new JSeparator());
 
-        this.printItem = new JMenuItem();
-        this.printItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK));
-        this.printItem.setIcon(new ImageIcon(getClass().getResource("/resources/print-16.png")));
-        this.printItem.setText("Print");
-        this.printItem.addActionListener(this::printItemActionPerformed);
-        this.fileMenu.add(this.printItem);
-        this.fileMenu.add(new JSeparator());
+        JMenuItem printItem = new JMenuItem();
+        printItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK));
+        printItem.setIcon(new ImageIcon(getClass().getResource("/resources/print-16.png")));
+        printItem.setText("Print");
+        printItem.addActionListener(this::printItemActionPerformed);
+        fileMenu.add(printItem);
+        fileMenu.add(new JSeparator());
 
-        this.quitItem = new JMenuItem();
-        this.quitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
-        this.quitItem.setIcon(new ImageIcon(getClass().getResource("/resources/exit-16.png")));
-        this.quitItem.setText("Quit");
-        this.quitItem.addActionListener(evt -> System.exit(0));
-        this.fileMenu.add(this.quitItem);
+        JMenuItem quitItem = new JMenuItem();
+        quitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
+        quitItem.setIcon(new ImageIcon(getClass().getResource("/resources/exit-16.png")));
+        quitItem.setText("Quit");
+        quitItem.addActionListener(evt -> System.exit(0));
+        fileMenu.add(quitItem);
 
-        this.mainMenuBar.add(this.fileMenu);
+        mainMenuBar.add(fileMenu);
 
         /*********************************************************************
          * Edit Menu
          ********************************************************************/
 
-        this.editMenu = new JMenu();
-        this.editMenu.setText("Edit");
+        JMenu editMenu = new JMenu();
+        editMenu.setText("Edit");
 
-        this.undoItem = new JMenuItem();
-        this.undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
-        this.undoItem.setIcon(new ImageIcon(getClass().getResource("/resources/undo-16.png")));
-        this.undoItem.setText("Undo");
-        this.undoItem.addActionListener(this::undoItemActionPerformed);
-        this.editMenu.add(this.undoItem);
+        JMenuItem undoItem = new JMenuItem();
+        undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+        undoItem.setIcon(new ImageIcon(getClass().getResource("/resources/undo-16.png")));
+        undoItem.setText("Undo");
+        undoItem.addActionListener(this::undoItemActionPerformed);
+        editMenu.add(undoItem);
 
-        this.redoItem = new JMenuItem();
-        this.redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK));
-        this.redoItem.setIcon(new ImageIcon(getClass().getResource("/resources/redo-16.png")));
-        this.redoItem.setText("Redo");
-        this.redoItem.addActionListener(this::redoItemActionPerformed);
-        this.editMenu.add(this.redoItem);
-        this.editMenu.add(new JSeparator());
+        JMenuItem redoItem = new JMenuItem();
+        redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK));
+        redoItem.setIcon(new ImageIcon(getClass().getResource("/resources/redo-16.png")));
+        redoItem.setText("Redo");
+        redoItem.addActionListener(this::redoItemActionPerformed);
+        editMenu.add(redoItem);
+        editMenu.add(new JSeparator());
 
-        this.cutItem = new JMenuItem();
-        this.cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
-        this.cutItem.setIcon(new ImageIcon(getClass().getResource("/resources/cut-16.png")));
-        this.cutItem.setText("Cut");
-        this.cutItem.addActionListener(this::cutItemActionPerformed);
-        this.editMenu.add(this.cutItem);
+        JMenuItem cutItem = new JMenuItem();
+        cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
+        cutItem.setIcon(new ImageIcon(getClass().getResource("/resources/cut-16.png")));
+        cutItem.setText("Cut");
+        cutItem.addActionListener(this::cutItemActionPerformed);
+        editMenu.add(cutItem);
 
-        this.copyItem = new JMenuItem();
-        this.copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
-        this.copyItem.setIcon(new ImageIcon(getClass().getResource("/resources/copy-16.png")));
-        this.copyItem.setText("Copy");
-        this.copyItem.addActionListener(this::copyItemActionPerformed);
-        this.editMenu.add(this.copyItem);
+        JMenuItem copyItem = new JMenuItem();
+        copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
+        copyItem.setIcon(new ImageIcon(getClass().getResource("/resources/copy-16.png")));
+        copyItem.setText("Copy");
+        copyItem.addActionListener(this::copyItemActionPerformed);
+        editMenu.add(copyItem);
 
-        this.pasteItem = new JMenuItem();
-        this.pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_MASK));
-        this.pasteItem.setIcon(new ImageIcon(getClass().getResource("/resources/paste-16.png")));
-        this.pasteItem.setText("Paste");
-        this.pasteItem.addActionListener(this::pasteItemActionPerformed);
-        this.editMenu.add(this.pasteItem);
-        this.editMenu.add(new JSeparator());
+        JMenuItem pasteItem = new JMenuItem();
+        pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_MASK));
+        pasteItem.setIcon(new ImageIcon(getClass().getResource("/resources/paste-16.png")));
+        pasteItem.setText("Paste");
+        pasteItem.addActionListener(this::pasteItemActionPerformed);
+        editMenu.add(pasteItem);
+        editMenu.add(new JSeparator());
 
-        this.clearSelectedItem = new JMenuItem();
-        this.clearSelectedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-        this.clearSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
-        this.clearSelectedItem.setText("Clear Selected");
-        this.clearSelectedItem.addActionListener(this::clearSelectedItemActionPerformed);
-        this.editMenu.add(this.clearSelectedItem);
+        JMenuItem clearSelectedItem = new JMenuItem();
+        clearSelectedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+        clearSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
+        clearSelectedItem.setText("Clear Selected");
+        clearSelectedItem.addActionListener(this::clearSelectedItemActionPerformed);
+        editMenu.add(clearSelectedItem);
 
-        this.clearAllItem = new JMenuItem();
-        this.clearAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-        this.clearAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
-        this.clearAllItem.setText("Clear all");
-        this.clearAllItem.addActionListener(this::clearAllItemActionPerformed);
-        this.editMenu.add(this.clearAllItem);
-        this.editMenu.add(new JSeparator());
+        JMenuItem clearAllItem = new JMenuItem();
+        clearAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+        clearAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/delete-16.png")));
+        clearAllItem.setText("Clear all");
+        clearAllItem.addActionListener(this::clearAllItemActionPerformed);
+        editMenu.add(clearAllItem);
+        editMenu.add(new JSeparator());
 
-        this.selectAllItem = new JMenuItem();
-        this.selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
-        this.selectAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/group-16.png")));
-        this.selectAllItem.setText("Select all");
-        this.selectAllItem.addActionListener(this::selectAllItemActionPerformed);
-        this.editMenu.add(this.selectAllItem);
+        JMenuItem selectAllItem = new JMenuItem();
+        selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+        selectAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/group-16.png")));
+        selectAllItem.setText("Select all");
+        selectAllItem.addActionListener(this::selectAllItemActionPerformed);
+        editMenu.add(selectAllItem);
 
-        this.deselectAllItem = new JMenuItem();
-        this.deselectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
-        this.deselectAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/ungroup-16.png")));
-        this.deselectAllItem.setText("Deselect all");
-        this.deselectAllItem.addActionListener(this::deselectAllItemActionPerformed);
-        this.editMenu.add(this.deselectAllItem);
+        JMenuItem deselectAllItem = new JMenuItem();
+        deselectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK));
+        deselectAllItem.setIcon(new ImageIcon(getClass().getResource("/resources/ungroup-16.png")));
+        deselectAllItem.setText("Deselect all");
+        deselectAllItem.addActionListener(this::deselectAllItemActionPerformed);
+        editMenu.add(deselectAllItem);
 
-        this.mainMenuBar.add(this.editMenu);
+        mainMenuBar.add(editMenu);
 
         /*********************************************************************
          * View Menu
          ********************************************************************/
 
-        this.viewMenu = new JMenu();
-        this.viewMenu.setText("View");
+        JMenu viewMenu = new JMenu();
+        viewMenu.setText("View");
 
-        this.zoomInItem = new JMenuItem();
-        this.zoomInItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_MASK));
-        this.zoomInItem.setIcon(new ImageIcon(getClass().getResource("/resources/plus2-16.png")));
-        this.zoomInItem.setText("Zoom In");
-        this.zoomInItem.addActionListener(this::zoomInItemActionPerformed);
-        this.viewMenu.add(this.zoomInItem);
+        JMenuItem zoomInItem = new JMenuItem();
+        zoomInItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_MASK));
+        zoomInItem.setIcon(new ImageIcon(getClass().getResource("/resources/plus2-16.png")));
+        zoomInItem.setText("Zoom In");
+        zoomInItem.addActionListener(this::zoomInItemActionPerformed);
+        viewMenu.add(zoomInItem);
 
-        this.zoomOutItem = new JMenuItem();
-        this.zoomOutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_MASK));
-        this.zoomOutItem.setIcon(new ImageIcon(getClass().getResource("/resources/minus2-16.png")));
-        this.zoomOutItem.setText("Zoom Out");
-        this.zoomOutItem.addActionListener(this::zoomOutItemActionPerformed);
-        this.viewMenu.add(this.zoomOutItem);
+        JMenuItem zoomOutItem = new JMenuItem();
+        zoomOutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_MASK));
+        zoomOutItem.setIcon(new ImageIcon(getClass().getResource("/resources/minus2-16.png")));
+        zoomOutItem.setText("Zoom Out");
+        zoomOutItem.addActionListener(this::zoomOutItemActionPerformed);
+        viewMenu.add(zoomOutItem);
 
-        this.fitContentItem = new JMenuItem();
-        this.fitContentItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, InputEvent.CTRL_MASK));
-        this.fitContentItem.setIcon(new ImageIcon(getClass().getResource("/resources/zoom-original2-16.png")));
-        this.fitContentItem.setText("Fit Content");
-        this.fitContentItem.addActionListener(this::fitContentItemActionPerformed);
-        this.viewMenu.add(this.fitContentItem);
-        this.viewMenu.add(new JSeparator());
+        JMenuItem fitContentItem = new JMenuItem();
+        fitContentItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, InputEvent.CTRL_MASK));
+        fitContentItem.setIcon(new ImageIcon(getClass().getResource("/resources/zoom-original2-16.png")));
+        fitContentItem.setText("Fit Content");
+        fitContentItem.addActionListener(this::fitContentItemActionPerformed);
+        viewMenu.add(fitContentItem);
+        viewMenu.add(new JSeparator());
 
-        this.toolsMenu = new JMenu();
-        this.toolsMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.toolsMenu.setText("Actions and Tools");
+        JMenu toolsMenu = new JMenu();
+        toolsMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        toolsMenu.setText("Actions and Tools");
 
-        /**
+        /*
         this.triangulateItem = new JMenuItem();
         this.triangulateItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
         this.triangulateItem.setIcon(new ImageIcon(getClass().getResource("/resources/Tool.png")));
@@ -478,23 +482,23 @@ public class MainFrame extends JFrame {
             }
         });
         this.toolsMenu.add(this.triangulateItem);
-        **/
+        */
 
-        this.mergeSelectedItem = new JMenuItem();
-        this.mergeSelectedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
-        this.mergeSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.mergeSelectedItem.setText("Merge Selected Nodes");
-        this.mergeSelectedItem.addActionListener(this::mergeSelectedItemActionPerformed);
-        this.toolsMenu.add(this.mergeSelectedItem);
+        JMenuItem mergeSelectedItem = new JMenuItem();
+        mergeSelectedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
+        mergeSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        mergeSelectedItem.setText("Merge Selected Nodes");
+        mergeSelectedItem.addActionListener(this::mergeSelectedItemActionPerformed);
+        toolsMenu.add(mergeSelectedItem);
 
-        this.stellateSelectedItem = new JMenuItem();
-        this.stellateSelectedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_MASK));
-        this.stellateSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.stellateSelectedItem.setText("Stellate Selected Nodes");
-        this.stellateSelectedItem.addActionListener(this::stellateSelectedItemActionPerformed);
-        this.toolsMenu.add(this.stellateSelectedItem);
+        JMenuItem stellateSelectedItem = new JMenuItem();
+        stellateSelectedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_MASK));
+        stellateSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        stellateSelectedItem.setText("Stellate Selected Nodes");
+        stellateSelectedItem.addActionListener(this::stellateSelectedItemActionPerformed);
+        toolsMenu.add(stellateSelectedItem);
 
-        /**
+        /*
         nodeToQuadrangleItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.ALT_MASK));
         nodeToQuadrangleItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
         nodeToQuadrangleItem.setText("Selected Nodes To Quadrangle");
@@ -514,141 +518,141 @@ public class MainFrame extends JFrame {
             }
         });
         toolsMenu.add(onePlanarAugmentorItem);
-        **/
+        */
 
-        this.subdivideSelectedItem = new JMenuItem();
-        this.subdivideSelectedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK));
-        this.subdivideSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.subdivideSelectedItem.setText("Subdivide Selected Edges");
-        this.subdivideSelectedItem.addActionListener(this::subdivideSelectedItemActionPerformed);
-        this.toolsMenu.add(this.subdivideSelectedItem);
+        JMenuItem subdivideSelectedItem = new JMenuItem();
+        subdivideSelectedItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK));
+        subdivideSelectedItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        subdivideSelectedItem.setText("Subdivide Selected Edges");
+        subdivideSelectedItem.addActionListener(this::subdivideSelectedItemActionPerformed);
+        toolsMenu.add(subdivideSelectedItem);
 
-        this.gridItem = new JMenuItem();
-        this.gridItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
-        this.gridItem.setIcon(new ImageIcon(getClass().getResource("/resources/grid-16.png")));
-        this.gridItem.setText("Grid");
-        this.gridItem.addActionListener(this::gridItemActionPerformed);
-        this.viewMenu.add(this.gridItem);
+        JMenuItem gridItem = new JMenuItem();
+        gridItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK));
+        gridItem.setIcon(new ImageIcon(getClass().getResource("/resources/grid-16.png")));
+        gridItem.setText("Grid");
+        gridItem.addActionListener(this::gridItemActionPerformed);
+        viewMenu.add(gridItem);
 
-        this.geometricTranformationsMenu = new JMenu();
-        this.geometricTranformationsMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.geometricTranformationsMenu.setText("Geometric Tranformations");
+        JMenu geometricTranformationsMenu = new JMenu();
+        geometricTranformationsMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        geometricTranformationsMenu.setText("Geometric Tranformations");
 
-        this.scaleItem = new JMenuItem();
-        this.scaleItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.scaleItem.setText("Scale");
-        this.scaleItem.addActionListener(this::scaleItemActionPerformed);
-        this.geometricTranformationsMenu.add(this.scaleItem);
+        JMenuItem scaleItem = new JMenuItem();
+        scaleItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        scaleItem.setText("Scale");
+        scaleItem.addActionListener(this::scaleItemActionPerformed);
+        geometricTranformationsMenu.add(scaleItem);
 
-        this.rotateItem = new JMenuItem();
-        this.rotateItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.rotateItem.setText("Rotate");
-        this.rotateItem.addActionListener(this::rotateItemActionPerformed);
-        this.geometricTranformationsMenu.add(this.rotateItem);
+        JMenuItem rotateItem = new JMenuItem();
+        rotateItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        rotateItem.setText("Rotate");
+        rotateItem.addActionListener(this::rotateItemActionPerformed);
+        geometricTranformationsMenu.add(rotateItem);
 
-        this.mirrorXItem = new JMenuItem();
-        this.mirrorXItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.mirrorXItem.setText("X-Axis Mirror");
-        this.mirrorXItem.addActionListener(this::mirrorXItemActionPerformed);
-        this.geometricTranformationsMenu.add(this.mirrorXItem);
+        JMenuItem mirrorXItem = new JMenuItem();
+        mirrorXItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        mirrorXItem.setText("X-Axis Mirror");
+        mirrorXItem.addActionListener(this::mirrorXItemActionPerformed);
+        geometricTranformationsMenu.add(mirrorXItem);
 
-        this.mirrorYItem = new JMenuItem();
-        this.mirrorYItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.mirrorYItem.setText("Y-Axis Mirror");
-        this.mirrorYItem.addActionListener(this::mirrorYItemActionPerformed);
-        this.geometricTranformationsMenu.add(this.mirrorYItem);
-        this.viewMenu.add(this.geometricTranformationsMenu);
-        this.viewMenu.add(new JSeparator());
+        JMenuItem mirrorYItem = new JMenuItem();
+        mirrorYItem.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        mirrorYItem.setText("Y-Axis Mirror");
+        mirrorYItem.addActionListener(this::mirrorYItemActionPerformed);
+        geometricTranformationsMenu.add(mirrorYItem);
+        viewMenu.add(geometricTranformationsMenu);
+        viewMenu.add(new JSeparator());
 
-        this.analyzeMenu = new JMenu();
-        this.analyzeMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.analyzeMenu.setText("Analyze Graph");
+        JMenu analyzeMenu = new JMenu();
+        analyzeMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        analyzeMenu.setText("Analyze Graph");
 
-        this.planarityMenu = new JMenuItem();
-        this.planarityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.planarityMenu.setText("Planarity");
-        this.planarityMenu.addActionListener(this::planarityMenuActionPerformed);
-        this.analyzeMenu.add(this.planarityMenu);
+        JMenuItem planarityMenu = new JMenuItem();
+        planarityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        planarityMenu.setText("Planarity");
+        planarityMenu.addActionListener(this::planarityMenuActionPerformed);
+        analyzeMenu.add(planarityMenu);
 
-        this.acyclicnessMenu = new JMenuItem();
-        this.acyclicnessMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.acyclicnessMenu.setText("Acyclicness");
-        this.acyclicnessMenu.addActionListener(this::acyclicnessMenuActionPerformed);
-        this.analyzeMenu.add(this.acyclicnessMenu);
+        JMenuItem acyclicnessMenu = new JMenuItem();
+        acyclicnessMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        acyclicnessMenu.setText("Acyclicness");
+        acyclicnessMenu.addActionListener(this::acyclicnessMenuActionPerformed);
+        analyzeMenu.add(acyclicnessMenu);
 
-        this.connectivityMenu = new JMenuItem();
-        this.connectivityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.connectivityMenu.setText("Connectivity");
-        this.connectivityMenu.addActionListener(this::connectivityMenuActionPerformed);
-        this.analyzeMenu.add(this.connectivityMenu);
+        JMenuItem connectivityMenu = new JMenuItem();
+        connectivityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        connectivityMenu.setText("Connectivity");
+        connectivityMenu.addActionListener(this::connectivityMenuActionPerformed);
+        analyzeMenu.add(connectivityMenu);
 
-        this.biconnectivityMenu = new JMenuItem();
-        this.biconnectivityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.biconnectivityMenu.setText("Biconnectivity");
-        this.biconnectivityMenu.addActionListener(this::biconnectivityMenuActionPerformed);
-        this.analyzeMenu.add(this.biconnectivityMenu);
+        JMenuItem biconnectivityMenu = new JMenuItem();
+        biconnectivityMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        biconnectivityMenu.setText("Biconnectivity");
+        biconnectivityMenu.addActionListener(this::biconnectivityMenuActionPerformed);
+        analyzeMenu.add(biconnectivityMenu);
 
-        this.maxDegreeMenu = new JMenuItem();
-        this.maxDegreeMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.maxDegreeMenu.setText("Maximum Degree");
-        this.maxDegreeMenu.addActionListener(this::maxDegreeMenuActionPerformed);
-        this.analyzeMenu.add(this.maxDegreeMenu);
+        JMenuItem maxDegreeMenu = new JMenuItem();
+        maxDegreeMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        maxDegreeMenu.setText("Maximum Degree");
+        maxDegreeMenu.addActionListener(this::maxDegreeMenuActionPerformed);
+        analyzeMenu.add(maxDegreeMenu);
 
-        this.bipartitenessMenu = new JMenuItem();
-        this.bipartitenessMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.bipartitenessMenu.setText("Bipartiteness");
-        this.bipartitenessMenu.addActionListener(this::bipartitenessMenuActionPerformed);
-        this.analyzeMenu.add(this.bipartitenessMenu);
+        JMenuItem bipartitenessMenu = new JMenuItem();
+        bipartitenessMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        bipartitenessMenu.setText("Bipartiteness");
+        bipartitenessMenu.addActionListener(this::bipartitenessMenuActionPerformed);
+        analyzeMenu.add(bipartitenessMenu);
 
-        this.stNumberingMenu = new JMenuItem();
-        this.stNumberingMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
-        this.stNumberingMenu.setText("st-Numbering");
-        this.stNumberingMenu.addActionListener(this::stNumberingMenuActionPerformed);
-        this.analyzeMenu.add(this.stNumberingMenu);
+        JMenuItem stNumberingMenu = new JMenuItem();
+        stNumberingMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
+        stNumberingMenu.setText("st-Numbering");
+        stNumberingMenu.addActionListener(this::stNumberingMenuActionPerformed);
+        analyzeMenu.add(stNumberingMenu);
 
-        this.viewMenu.add(this.toolsMenu);
-        this.viewMenu.add(this.analyzeMenu);
-        this.viewMenu.add(new JSeparator());
+        viewMenu.add(toolsMenu);
+        viewMenu.add(analyzeMenu);
+        viewMenu.add(new JSeparator());
 
-        this.mainMenuBar.add(this.viewMenu);
+        mainMenuBar.add(viewMenu);
 
         /*********************************************************************
          * View Menu
          ********************************************************************/
 
-        this.layoutMenu = new JMenu();
-        this.layoutMenu.setText("Layout");
+        JMenu layoutMenu = new JMenu();
+        layoutMenu.setText("Layout");
 
-        this.orthogonalItem = new JMenuItem();
-        this.orthogonalItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
-        this.orthogonalItem.setText("Orthogonal");
-        this.orthogonalItem.addActionListener(this::orthogonalItemActionPerformed);
-        this.layoutMenu.add(this.orthogonalItem);
+        JMenuItem orthogonalItem = new JMenuItem();
+        orthogonalItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
+        orthogonalItem.setText("Orthogonal");
+        orthogonalItem.addActionListener(this::orthogonalItemActionPerformed);
+        layoutMenu.add(orthogonalItem);
 
-        this.circularItem = new JMenuItem();
-        this.circularItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
-        this.circularItem.setText("Circular");
-        this.circularItem.addActionListener(this::circularItemActionPerformed);
-        this.layoutMenu.add(this.circularItem);
+        JMenuItem circularItem = new JMenuItem();
+        circularItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
+        circularItem.setText("Circular");
+        circularItem.addActionListener(this::circularItemActionPerformed);
+        layoutMenu.add(circularItem);
 
-        this.treeItem = new JMenuItem();
-        this.treeItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
-        this.treeItem.setText("Tree");
-        this.treeItem.addActionListener(this::treeItemActionPerformed);
-        this.layoutMenu.add(this.treeItem);
+        JMenuItem treeItem = new JMenuItem();
+        treeItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
+        treeItem.setText("Tree");
+        treeItem.addActionListener(this::treeItemActionPerformed);
+        layoutMenu.add(treeItem);
 
-        this.organicItem = new JMenuItem();
-        this.organicItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
-        this.organicItem.setText("Organic");
-        this.organicItem.addActionListener(this::organicItemActionPerformed);
-        this.layoutMenu.add(this.organicItem);
-        this.layoutMenu.add(new JSeparator());
+        JMenuItem organicItem = new JMenuItem();
+        organicItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
+        organicItem.setText("Organic");
+        organicItem.addActionListener(this::organicItemActionPerformed);
+        layoutMenu.add(organicItem);
+        layoutMenu.add(new JSeparator());
 
-        this.springEmbedderItem = new JMenuItem();
-        this.springEmbedderItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
-        this.springEmbedderItem.setText("Spring Embedder");
-        this.springEmbedderItem.addActionListener(this::springEmbedderItemActionPerformed);
-        this.layoutMenu.add(this.springEmbedderItem);
+        JMenuItem springEmbedderItem = new JMenuItem();
+        springEmbedderItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
+        springEmbedderItem.setText("Spring Embedder");
+        springEmbedderItem.addActionListener(this::springEmbedderItemActionPerformed);
+        layoutMenu.add(springEmbedderItem);
 
         /**
         this.fppItem = new JMenuItem();
@@ -662,9 +666,9 @@ public class MainFrame extends JFrame {
         this.layoutMenu.add(this.fppItem);
         **/
 
-        this.mainMenuBar.add(this.layoutMenu);
+        mainMenuBar.add(layoutMenu);
 
-        super.setJMenuBar(this.mainMenuBar);
+        super.setJMenuBar(mainMenuBar);
     }
 
 
@@ -708,7 +712,7 @@ public class MainFrame extends JFrame {
             editLabel.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
             editLabel.addActionListener(evt -> {
                 JTextField labelTextField = new JTextField(node.getLabels().first().getText());
-                int result = JOptionPane.showOptionDialog(null, new Object[]{"Label: ", labelTextField}, (node.getLabels().first().equals("") ? "Add Label" : "Edit Label"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+                int result = JOptionPane.showOptionDialog(null, new Object[]{"Label: ", labelTextField}, node.getLabels().first().equals("") ? "Add Label" : "Edit Label", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
                 if (result == JOptionPane.OK_OPTION) {
                     view.getGraph().setLabelText(node.getLabels().first(), labelTextField.getText());
                 }
@@ -803,7 +807,7 @@ public class MainFrame extends JFrame {
         for (INodeCursor nc = stOrder.nodes(); nc.ok(); nc.next()) {
             int st = stOrder.indexOf(nc.node()) + 1;
             INode original = adapter.getOriginalNode(nc.node());
-            this.view.getGraph().setLabelText(original.getLabels().first(), new Integer(st).toString());
+            this.view.getGraph().setLabelText(original.getLabels().first(), Integer.toString(st));
         }
     }
 
@@ -887,7 +891,7 @@ public class MainFrame extends JFrame {
 
     private void subdivideSelectedItemActionPerformed(ActionEvent evt) {
         ISelectionModel<IEdge> selection = this.view.getSelection().getSelectedEdges();
-        List<IEdge> edgesToRemove = new ArrayList<IEdge>();
+        List<IEdge> edgesToRemove = new ArrayList<>();
 
         for (IEdge edge : selection) {
             INode newNode = this.view.getGraph().createNode();
@@ -941,7 +945,7 @@ public class MainFrame extends JFrame {
 
     private void mergeSelectedItemActionPerformed(ActionEvent evt) {
         ISelectionModel<INode> selection = this.view.getSelection().getSelectedNodes();
-        List<INode> nodesToRemove = new ArrayList<INode>();
+        List<INode> nodesToRemove = new ArrayList<>();
 
         if (selection.getCount() > 0)  //selected nodes present
         {
@@ -1035,7 +1039,7 @@ public class MainFrame extends JFrame {
     }
 
     private void treeGraphItemActionPerformed(ActionEvent event) {
-        util.RandomGraphGenerator rgg = new util.RandomGraphGenerator();
+        RandomGraphGenerator rgg = new RandomGraphGenerator();
         rgg.allowMultipleEdges(false);
         rgg.allowCycles(false);
         rgg.allowSelfLoops(false);
@@ -1054,7 +1058,7 @@ public class MainFrame extends JFrame {
                 rgg.setEdgeCount(9);
             } finally {
                 rgg.generate(this.view.getGraph());
-                LayoutUtilities.applyLayout(view.getGraph(), this.defaultLayouter);
+                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
             }
@@ -1062,7 +1066,7 @@ public class MainFrame extends JFrame {
     }
 
     private void connectedGraphItemActionPerformed(ActionEvent evt) {
-        util.RandomGraphGenerator rgg = new util.RandomGraphGenerator();
+        RandomGraphGenerator rgg = new RandomGraphGenerator();
         rgg.allowMultipleEdges(false);
         rgg.allowCycles(true);
         rgg.allowSelfLoops(false);
@@ -1091,7 +1095,7 @@ public class MainFrame extends JFrame {
                     this.view.getGraph().createEdge(adapter.getOriginalNode(ec.edge().source()), adapter.getOriginalNode(ec.edge().target()));
                 }
 
-                LayoutUtilities.applyLayout(view.getGraph(), this.defaultLayouter);
+                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
             }
@@ -1099,13 +1103,13 @@ public class MainFrame extends JFrame {
     }
 
     private void randomGraphItemActionPerformed(ActionEvent evt) {
-        util.RandomGraphGenerator rgg = new util.RandomGraphGenerator();
+        RandomGraphGenerator rgg = new RandomGraphGenerator();
         rgg.allowMultipleEdges(false);
         rgg.allowCycles(true);
         rgg.allowSelfLoops(false);
 
-        JTextField nodeCount = new JTextField();
-        JTextField edgeCount = new JTextField();
+        JTextField nodeCount = new JTextField("20");
+        JTextField edgeCount = new JTextField("40");
 
         int result = JOptionPane.showOptionDialog(null, new Object[]{"Number of Nodes: ", nodeCount, "Number of Edges: ", edgeCount}, "Graph Properties", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
 
@@ -1118,8 +1122,8 @@ public class MainFrame extends JFrame {
                 rgg.setNodeCount(10);
                 rgg.setEdgeCount(10);
             } finally {
-                rgg.generate(view.getGraph());
-                LayoutUtilities.applyLayout(view.getGraph(), this.defaultLayouter);
+                rgg.generate(this.view.getGraph());
+                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
             }
@@ -1171,15 +1175,15 @@ public class MainFrame extends JFrame {
     }
 
     private void saveItemActionPerformed(ActionEvent evt) {
-        if (fileNamePath != null)
+        if (this.fileNamePath != null)
         {
             try {
-                this.view.exportToGraphML(fileNamePath);
+                this.view.exportToGraphML(this.fileNamePath);
             } catch (IOException ioe) {
                 this.infoLabel.setText("An error occured while exporting the graph.");
             }
         } else {
-            JFileChooser chooser = new JFileChooser(fileNamePath);
+            JFileChooser chooser = new JFileChooser(this.fileNamePath);
             chooser.setFileFilter(new FileFilter() {
                 public boolean accept(File file) {
                     return (file.isDirectory() || file.toString().toLowerCase().endsWith(".graphml"));
@@ -1191,14 +1195,14 @@ public class MainFrame extends JFrame {
 
             });
             if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                fileNamePath = chooser.getSelectedFile().toString();
-                if (!fileNamePath.toLowerCase().endsWith(".graphml")) {
-                    fileNamePath = fileNamePath + ".graphml";
+                this.fileNamePath = chooser.getSelectedFile().toString();
+                if (!this.fileNamePath.toLowerCase().endsWith(".graphml")) {
+                    this.fileNamePath = this.fileNamePath + ".graphml";
                 }
-                fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+                this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
 
                 try {
-                    this.view.exportToGraphML(fileNamePath);
+                    this.view.exportToGraphML(this.fileNamePath);
                 } catch (IOException ioe) {
                     this.infoLabel.setText("An error occured while exporting the graph.");
                 }
@@ -1207,7 +1211,7 @@ public class MainFrame extends JFrame {
     }
 
     private void saveAsItemActionPerformed(ActionEvent evt) {
-        JFileChooser chooser = new JFileChooser(fileNamePathFolder);
+        JFileChooser chooser = new JFileChooser(this.fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
                 return (file.isDirectory() || file.toString().toLowerCase().endsWith(".graphml"));
@@ -1219,15 +1223,15 @@ public class MainFrame extends JFrame {
 
         });
         if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-            fileNamePath = chooser.getSelectedFile().toString();
+            this.fileNamePath = chooser.getSelectedFile().toString();
 
-            if (!fileNamePath.toLowerCase().endsWith(".graphml")) {
-                fileNamePath = fileNamePath + ".graphml";
+            if (!this.fileNamePath.toLowerCase().endsWith(".graphml")) {
+                this.fileNamePath = this.fileNamePath + ".graphml";
             }
-            fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+            this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
 
             try {
-                this.view.exportToGraphML(fileNamePath);
+                this.view.exportToGraphML(this.fileNamePath);
             } catch (IOException ioe) {
                 this.infoLabel.setText("An error occured while exporting the graph.");
             }
@@ -1256,7 +1260,7 @@ public class MainFrame extends JFrame {
     }
 
     private void jpgItemActionPerformed(ActionEvent evt) {
-        JFileChooser chooser = new JFileChooser(fileNamePathFolder);
+        JFileChooser chooser = new JFileChooser(this.fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
                 return (file.isDirectory() || file.toString().toLowerCase().endsWith(".jpg"));
@@ -1276,9 +1280,8 @@ public class MainFrame extends JFrame {
             PixelImageExporter exporter = new PixelImageExporter(configuration);
 
             try {
-                FileOutputStream stream = new FileOutputStream(fileName);
-                exporter.export(this.view, stream, "jpg");
-                fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+                exporter.export(this.view, new FileOutputStream(fileName), "jpg");
+                this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
             } catch (IOException ioe) {
                 this.infoLabel.setText("An error occured which exporting the graph.");
             }
@@ -1286,7 +1289,7 @@ public class MainFrame extends JFrame {
     }
 
     private void gifItemActionPerformed(ActionEvent evt) {
-        JFileChooser chooser = new JFileChooser(fileNamePathFolder);
+        JFileChooser chooser = new JFileChooser(this.fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
                 return (file.isDirectory() || file.toString().toLowerCase().endsWith(".gif"));
@@ -1306,9 +1309,8 @@ public class MainFrame extends JFrame {
             PixelImageExporter exporter = new PixelImageExporter(configuration);
 
             try {
-                FileOutputStream stream = new FileOutputStream(fileName);
-                exporter.export(this.view, stream, "gif");
-                fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+                exporter.export(this.view, new FileOutputStream(fileName), "gif");
+                this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
             } catch (IOException ioe) {
                 this.infoLabel.setText("An error occured which exporting the graph.");
             }
@@ -1316,14 +1318,14 @@ public class MainFrame extends JFrame {
     }
 
     private void christianFormatItemActionPerformed(ActionEvent evt) {
-        JFileChooser chooser = new JFileChooser(fileNamePathFolder);
+        JFileChooser chooser = new JFileChooser(this.fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
                 return (file.isDirectory() || file.toString().toLowerCase().endsWith(".amf"));
             }
 
             public String getDescription() {
-                return "AF Files [.amf]";
+                return "AMF Files [.amf]";
             }
 
         });
@@ -1343,7 +1345,7 @@ public class MainFrame extends JFrame {
     }
 
     private void sergeyFormatItemActionPerformed(ActionEvent evt) {
-        JFileChooser chooser = new JFileChooser(fileNamePathFolder);
+        JFileChooser chooser = new JFileChooser(this.fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
                 return (file.isDirectory() || file.toString().toLowerCase().endsWith(".edges"));
@@ -1370,7 +1372,7 @@ public class MainFrame extends JFrame {
     }
 
     private void christianImportFormatItemActionPerformed(ActionEvent evt) {
-        JFileChooser chooser = new JFileChooser(fileNamePathFolder);
+        JFileChooser chooser = new JFileChooser(this.fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
                 return (file.isDirectory() || file.toString().toLowerCase().endsWith("amf"));
@@ -1383,28 +1385,28 @@ public class MainFrame extends JFrame {
         });
         if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION)
         {
-            fileNamePath = chooser.getSelectedFile().toString();
-            fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+            this.fileNamePath = chooser.getSelectedFile().toString();
+            this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
 
             ChristianIOHandler ioh = new ChristianIOHandler();
 
             try {
                 view.getGraph().clear();
 
-                Graph g = ioh.read(fileNamePath);
+                Graph g = ioh.read(this.fileNamePath);
                 INodeMap map = g.createNodeMap();
 
                 for (INodeCursor nc = g.getNodeCursor(); nc.ok(); nc.next())
                 {
-                    map.set(nc.node(), view.getGraph().createNode());
+                    map.set(nc.node(), this.view.getGraph().createNode());
                 }
                 for (IEdgeCursor ec = g.getEdgeCursor(); ec.ok(); ec.next())
                 {
-                    view.getGraph().createEdge((INode) map.get(ec.edge().target()), (INode) map.get(ec.edge().source()));
+                    this.view.getGraph().createEdge((INode) map.get(ec.edge().target()), (INode) map.get(ec.edge().source()));
                 }
                 g.disposeNodeMap(map);
 
-                LayoutUtilities.applyLayout(view.getGraph(), this.defaultLayouter);
+                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
 
@@ -1415,7 +1417,7 @@ public class MainFrame extends JFrame {
     }
 
     private void sergeyImportFormatItemActionPerformed(ActionEvent evt) {
-        JFileChooser chooser = new JFileChooser(fileNamePathFolder);
+        JFileChooser chooser = new JFileChooser(this.fileNamePathFolder);
         chooser.setFileFilter(new FileFilter() {
             public boolean accept(File file) {
                 return (file.isDirectory() || file.toString().toLowerCase().endsWith("edges"));
@@ -1428,15 +1430,15 @@ public class MainFrame extends JFrame {
         });
         if (chooser.showOpenDialog(null) == javax.swing.JFileChooser.APPROVE_OPTION)
         {
-            fileNamePath = chooser.getSelectedFile().toString();
-            fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
+            this.fileNamePath = chooser.getSelectedFile().toString();
+            this.fileNamePathFolder = chooser.getSelectedFile().getParent().toString();
 
             SergeyIOHandler ioh = new SergeyIOHandler();
 
             try {
-                view.getGraph().clear();
+                this.view.getGraph().clear();
 
-                Graph g = ioh.read(fileNamePath);
+                Graph g = ioh.read(this.fileNamePath);
                 INodeMap map = g.createNodeMap();
 
                 for (INodeCursor nc = g.getNodeCursor(); nc.ok(); nc.next())
@@ -1445,11 +1447,11 @@ public class MainFrame extends JFrame {
                 }
                 for (IEdgeCursor ec = g.getEdgeCursor(); ec.ok(); ec.next())
                 {
-                    view.getGraph().createEdge((INode) map.get(ec.edge().target()), (INode) map.get(ec.edge().source()));
+                    this.view.getGraph().createEdge((INode) map.get(ec.edge().target()), (INode) map.get(ec.edge().source()));
                 }
                 g.disposeNodeMap(map);
 
-                LayoutUtilities.applyLayout(view.getGraph(), this.defaultLayouter);
+                LayoutUtilities.applyLayout(this.view.getGraph(), this.defaultLayouter);
                 this.view.fitGraphBounds();
                 this.view.updateUI();
 
@@ -1473,74 +1475,4 @@ public class MainFrame extends JFrame {
             }
         }
     }
-
-    /*********************************************************************
-     * Additional GUI-related Fields
-     ********************************************************************/
-
-    private JPanel mainPanel;
-    private JPanel progressBarPanel;
-    private JLabel infoLabel;
-    private JProgressBar progressBar;
-    private JMenuBar mainMenuBar;
-    private JMenu fileMenu;
-    private JMenuItem newMenuItem;
-    private JMenuItem blankGraphItem;
-    private JMenuItem treeGraphItem;
-    private JMenuItem connectedGraphItem;
-    private JMenuItem randomGraphItem;
-    private JMenuItem openItem;
-    private JMenuItem reloadItem;
-    private JMenuItem saveItem;
-    private JMenuItem saveAsItem;
-    private JMenu exportMenu;
-    private JMenu importMenu;
-    private JMenuItem jpgItem;
-    private JMenuItem gifItem;
-    private JMenuItem christianFormatItem;
-    private JMenuItem sergeyFormatItem;
-    private JMenuItem christianImportFormatItem;
-    private JMenuItem sergeyImportFormatItem;
-    private JMenuItem printItem;
-    private JMenuItem quitItem;
-    private JMenu editMenu;
-    private JMenuItem undoItem;
-    private JMenuItem redoItem;
-    private JMenuItem cutItem;
-    private JMenuItem copyItem;
-    private JMenuItem pasteItem;
-    private JMenuItem clearSelectedItem;
-    private JMenuItem clearAllItem;
-    private JMenuItem selectAllItem;
-    private JMenuItem deselectAllItem;
-    private JMenu viewMenu;
-    private JMenuItem zoomInItem;
-    private JMenuItem zoomOutItem;
-    private JMenuItem fitContentItem;
-    private JMenu toolsMenu;
-    private JMenuItem mergeSelectedItem;
-    private JMenuItem stellateSelectedItem;
-    private JMenuItem gridItem;
-    private JMenuItem subdivideSelectedItem;
-    private JMenu geometricTranformationsMenu;
-    private JMenuItem scaleItem;
-    private JMenuItem rotateItem;
-    private JMenuItem mirrorXItem;
-    private JMenuItem mirrorYItem;
-    private JMenu analyzeMenu;
-    private JMenuItem planarityMenu;
-    private JMenuItem acyclicnessMenu;
-    private JMenuItem connectivityMenu;
-    private JMenuItem biconnectivityMenu;
-    private JMenuItem maxDegreeMenu;
-    private JMenuItem bipartitenessMenu;
-    private JMenuItem stNumberingMenu;
-
-    private JMenu layoutMenu;
-    private JMenuItem orthogonalItem;
-    private JMenuItem circularItem;
-    private JMenuItem treeItem;
-    private JMenuItem organicItem;
-    private JMenuItem springEmbedderItem;
-
 }
