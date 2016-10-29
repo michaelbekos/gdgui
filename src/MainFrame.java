@@ -29,7 +29,6 @@ import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 
 import java.awt.*;
-import java.awt.Color;
 import java.awt.event.*;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -65,7 +64,6 @@ public class MainFrame extends JFrame {
     /* Central gui elements */
     private JLabel infoLabel;
     private JProgressBar progressBar;
-
 
     /**
      * Creates new form MainFrame
@@ -142,9 +140,7 @@ public class MainFrame extends JFrame {
         });
         this.view.setInputMode(this.graphEditorInputMode);
 
-        /*********************************************************************
-         * Add two listeners two the graph
-         ********************************************************************/
+        /* Add two listeners two the graph */
         this.view.getGraph().addNodeCreatedListener((o, iNodeItemEventArgs) -> {
             if (iNodeItemEventArgs.getItem() instanceof INode)
             {
@@ -160,9 +156,7 @@ public class MainFrame extends JFrame {
             }
         });
 
-        /*********************************************************************
-         * Add two listeners two the graph
-         ********************************************************************/
+        /* Add two listeners two the graph */
         this.graphSnapContext = new GraphSnapContext();
         this.graphEditorInputMode.setSnapContext(this.graphSnapContext);
         GridInfo gridInfo = new GridInfo();
@@ -173,9 +167,7 @@ public class MainFrame extends JFrame {
         this.graphSnapContext.setNodeGridConstraintProvider(new GridConstraintProvider<>(gridInfo));
         this.graphSnapContext.setBendGridConstraintProvider(new GridConstraintProvider<>(gridInfo));
 
-        /*********************************************************************
-         * Default Node Styling
-         ********************************************************************/
+        /* Default Node Styling */
         this.defaultNodeStyle = new ShinyPlateNodeStyle();
         this.defaultNodeStyle.setPaint(Color.BLUE);
         this.defaultNodeStyle.setPen(new Pen(Color.BLACK, 1));
@@ -184,16 +176,12 @@ public class MainFrame extends JFrame {
         this.view.getGraph().getDecorator().getNodeDecorator().getFocusIndicatorDecorator().hideImplementation();
         this.view.getGraph().getNodeDefaults().setSize(new SizeD(30, 30));
 
-        /*********************************************************************
-         * Default Edge Styling
-         ********************************************************************/
+        /* Default Edge Styling */
         this.defaultEdgeStyle = new PolylineEdgeStyle();
         this.defaultEdgeStyle.setPen(Pen.getBlack());
         this.view.getGraph().getEdgeDefaults().setStyle(this.defaultEdgeStyle);
 
-        /*********************************************************************
-         * Default Label Styling
-         ********************************************************************/
+        /* Default Label Styling */
         this.defaultLabelStyle = new SimpleLabelStyle();
         this.defaultLabelStyle.setFont(new Font("Dialog", Font.PLAIN, 12));
         this.defaultLabelStyle.setTextPaint(Colors.WHITE);
@@ -212,9 +200,7 @@ public class MainFrame extends JFrame {
     {
         JMenuBar mainMenuBar = new JMenuBar();
 
-        /*********************************************************************
-         * File Menu
-         ********************************************************************/
+        /* File Menu */
         JMenu fileMenu = new JMenu();
         fileMenu.setText("File");
         mainMenuBar.add(fileMenu);
@@ -349,10 +335,7 @@ public class MainFrame extends JFrame {
 
         mainMenuBar.add(fileMenu);
 
-        /*********************************************************************
-         * Edit Menu
-         ********************************************************************/
-
+        /* Edit Menu */
         JMenu editMenu = new JMenu();
         editMenu.setText("Edit");
 
@@ -424,9 +407,7 @@ public class MainFrame extends JFrame {
 
         mainMenuBar.add(editMenu);
 
-        /*********************************************************************
-         * View Menu
-         ********************************************************************/
+        /* View Menu */
 
         JMenu viewMenu = new JMenu();
         viewMenu.setText("View");
@@ -602,10 +583,7 @@ public class MainFrame extends JFrame {
 
         mainMenuBar.add(viewMenu);
 
-        /*********************************************************************
-         * View Menu
-         ********************************************************************/
-
+        /* View Menu */
         JMenu layoutMenu = new JMenu();
         layoutMenu.setText("Layout");
 
@@ -653,7 +631,6 @@ public class MainFrame extends JFrame {
         */
 
         mainMenuBar.add(layoutMenu);
-
         super.setJMenuBar(mainMenuBar);
     }
 
@@ -694,11 +671,11 @@ public class MainFrame extends JFrame {
 
             JPopupMenu popupMenu = (JPopupMenu) args.getMenu();
 
-            JMenuItem editLabel = new JMenuItem(node.getLabels().first().equals("") ? "Add Label" : "Edit Label");
+            JMenuItem editLabel = new JMenuItem(node.getLabels().first().getText().equals("") ? "Add Label" : "Edit Label");
             editLabel.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
             editLabel.addActionListener(evt -> {
                 JTextField labelTextField = new JTextField(node.getLabels().first().getText());
-                int result = JOptionPane.showOptionDialog(null, new Object[]{"Label: ", labelTextField}, node.getLabels().first().equals("") ? "Add Label" : "Edit Label", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+                int result = JOptionPane.showOptionDialog(null, new Object[]{"Label: ", labelTextField}, node.getLabels().first().getText().equals("") ? "Add Label" : "Edit Label", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
                 if (result == JOptionPane.OK_OPTION) {
                     view.getGraph().setLabelText(node.getLabels().first(), labelTextField.getText());
                 }
@@ -1217,7 +1194,7 @@ public class MainFrame extends JFrame {
                 this.infoLabel.setText("An error occured while exporting the graph.");
             }
         } else {
-            JFileChooser chooser = new JFileChooser(this.fileNamePath);
+            JFileChooser chooser = new JFileChooser();
             chooser.setFileFilter(new FileFilter() {
                 public boolean accept(File file) {
                     return (file.isDirectory() || file.toString().toLowerCase().endsWith(".graphml"));
