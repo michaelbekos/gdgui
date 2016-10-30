@@ -1,5 +1,6 @@
 import com.yworks.yfiles.algorithms.*;
 import com.yworks.yfiles.geometry.PointD;
+import com.yworks.yfiles.geometry.RectD;
 import com.yworks.yfiles.geometry.SizeD;
 import com.yworks.yfiles.graph.*;
 import com.yworks.yfiles.graph.styles.PolylineEdgeStyle;
@@ -117,7 +118,6 @@ public class MainFrame extends JFrame {
         mainPanel.setLayout(new BorderLayout(0, 10));
         mainPanel.add(progressBarPanel, BorderLayout.PAGE_END);
 
-
         this.view = new GraphComponent();
         this.view.setSize(330, 330);
         this.view.requestFocus();
@@ -144,10 +144,13 @@ public class MainFrame extends JFrame {
         /* Add four listeners two the graph */
         this.graph.addNodeCreatedListener((o, iNodeItemEventArgs) -> {
             graph.addLabel(iNodeItemEventArgs.getItem(), Integer.toString(graph.getNodes().size() - 1));
+            this.graph.setStyle(iNodeItemEventArgs.getItem(), this.defaultNodeStyle.clone());
+            this.graph.setStyle(iNodeItemEventArgs.getItem().getLabels().first(), this.defaultLabelStyle.clone());
             infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
         });
 
         this.graph.addEdgeCreatedListener((o, iNodeItemEventArgs) -> {
+            this.graph.setStyle(iNodeItemEventArgs.getItem(), this.defaultEdgeStyle.clone());
             infoLabel.setText("Number of Vertices: " + graph.getNodes().size() + "     Number of Edges: " + graph.getEdges().size());
         });
         this.graph.addNodeRemovedListener((o, iNodeItemEventArgs) -> {
@@ -171,8 +174,8 @@ public class MainFrame extends JFrame {
 
         /* Default Node Styling */
         this.defaultNodeStyle = new ShinyPlateNodeStyle();
-        this.defaultNodeStyle.setPaint(Color.BLUE);
-        this.defaultNodeStyle.setPen(new Pen(Color.BLACK, 1));
+        this.defaultNodeStyle.setPaint(Color.RED);
+        this.defaultNodeStyle.setPen(new Pen(Color.GRAY, 1));
         this.defaultNodeStyle.setShadowDrawingEnabled(false);
         this.graph.getNodeDefaults().setStyle(defaultNodeStyle);
         this.graph.getDecorator().getNodeDecorator().getFocusIndicatorDecorator().hideImplementation();
@@ -193,9 +196,174 @@ public class MainFrame extends JFrame {
         super.getContentPane().setLayout(new java.awt.BorderLayout(20, 20));
         super.getContentPane().add(mainPanel, java.awt.BorderLayout.CENTER);
 
+        JPanel toolBar = this.initToolBar();
+        mainPanel.add(toolBar, BorderLayout.PAGE_START);
+
         this.defaultLayouter = new OrganicLayout();
         this.defaultLayouter.setPreferredEdgeLength(100);
         this.defaultLayouter.setMinimumNodeDistance(100);
+    }
+
+    private JPanel initToolBar()
+    {
+        JPanel toolBar = new JPanel();
+        toolBar.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 0));
+        toolBar.setBorder(BorderFactory.createEmptyBorder(0, -20, 0, 0));
+
+        JLabel widthLabel = new JLabel();
+        widthLabel.setText("Width:");
+        toolBar.add(widthLabel);
+
+        JComboBox widthComboBox = new JComboBox();
+        for (int i=20; i<=50; i+=2)
+        {
+            Object item = Integer.toString(i);
+            widthComboBox.addItem(item);
+            if (this.graph.getNodeDefaults().getSize().width == i)
+            {
+                widthComboBox.setSelectedItem(item);
+            }
+        }
+        widthComboBox.setPreferredSize(new Dimension(80, 20));
+        ((JLabel)widthComboBox.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+        widthComboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                this.widthComboBoxItemStateChanged(e);
+            }
+        });
+        toolBar.add(widthComboBox);
+
+        JLabel heightLabel = new JLabel();
+        heightLabel.setText("Height:");
+        toolBar.add(heightLabel);
+
+        JComboBox heightComboBox = new JComboBox();
+        for (int i=20; i<=50; i+=2)
+        {
+            Object item = Integer.toString(i);
+            heightComboBox.addItem(item);
+            if (this.graph.getNodeDefaults().getSize().height == i)
+            {
+                heightComboBox.setSelectedItem(item);
+            }
+        }
+        heightComboBox.setPreferredSize(new Dimension(80, 20));
+        ((JLabel)heightComboBox.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+        heightComboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                this.heightComboBoxItemStateChanged(e);
+            }
+        });
+        toolBar.add(heightComboBox);
+
+        JLabel labelSizeLabel = new JLabel();
+        labelSizeLabel.setText("Label size:");
+        toolBar.add(labelSizeLabel);
+
+        JComboBox labelSizeComboBox = new JComboBox();
+        for (int i=8; i<=30; i+=2)
+        {
+            Object item = Integer.toString(i);
+            labelSizeComboBox.addItem(item);
+            if (this.defaultLabelStyle.getFont().getSize() == i)
+            {
+                labelSizeComboBox.setSelectedItem(item);
+            }
+        }
+        labelSizeComboBox.setPreferredSize(new Dimension(80, 20));
+        ((JLabel)labelSizeComboBox.getRenderer()).setHorizontalAlignment(JLabel.CENTER);
+        labelSizeComboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                this.labelSizeComboBoxItemStateChanged(e);
+            }
+        });
+        toolBar.add(labelSizeComboBox);
+
+        JLabel nodeFillColorLabel = new JLabel();
+        nodeFillColorLabel.setText("Node Color:");
+        toolBar.add(nodeFillColorLabel);
+
+        JPanel nodeFillColorPanel = new JPanel();
+        nodeFillColorPanel.setPreferredSize(new Dimension(60, 20));
+        nodeFillColorPanel.setBackground((Color) this.defaultNodeStyle.getPaint());
+        nodeFillColorPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseEntered(e);
+                nodeFillColorPanelActionPerformed(nodeFillColorPanel, e);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                super.mouseEntered(e);
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                super.mouseExited(e);
+                setCursor(Cursor.getDefaultCursor());
+            }
+        });
+        toolBar.add(nodeFillColorPanel);
+
+        JLabel nodeBorderColorLabel = new JLabel();
+        nodeBorderColorLabel.setText("Border Color:");
+        toolBar.add(nodeBorderColorLabel);
+
+        JPanel nodeBorderColorPanel = new JPanel();
+        nodeBorderColorPanel.setPreferredSize(new Dimension(60, 20));
+        nodeBorderColorPanel.setBackground((Color) this.defaultNodeStyle.getPen().getPaint());
+        nodeBorderColorPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseEntered(e);
+                nodeBorderColorPanelActionPerformed(nodeBorderColorPanel, e);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                super.mouseEntered(e);
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                super.mouseExited(e);
+                setCursor(Cursor.getDefaultCursor());
+            }
+        });
+        toolBar.add(nodeBorderColorPanel);
+
+        JLabel edgeColorLabel = new JLabel();
+        edgeColorLabel.setText("Edge Color:");
+        toolBar.add(edgeColorLabel);
+
+        JPanel edgeColorPanel = new JPanel();
+        edgeColorPanel.setPreferredSize(new Dimension(60, 20));
+        edgeColorPanel.setBackground((Color) this.defaultEdgeStyle.getPen().getPaint());
+        edgeColorPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseEntered(e);
+                edgeColorPanelActionPerformed(edgeColorPanel, e);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                super.mouseEntered(e);
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                super.mouseExited(e);
+                setCursor(Cursor.getDefaultCursor());
+            }
+        });
+        toolBar.add(edgeColorPanel);
+
+        return toolBar;
     }
 
     private void initMenuBar() {
@@ -433,7 +601,6 @@ public class MainFrame extends JFrame {
         fitContentItem.setText("Fit Content");
         fitContentItem.addActionListener(this::fitContentItemActionPerformed);
         viewMenu.add(fitContentItem);
-        viewMenu.add(new JSeparator());
 
         JMenu toolsMenu = new JMenu();
         toolsMenu.setIcon(new ImageIcon(getClass().getResource("/resources/star-16.png")));
@@ -1450,7 +1617,6 @@ public class MainFrame extends JFrame {
         }
     }
 
-
     private void printItemActionPerformed(ActionEvent evt) {
         PrinterJob job = PrinterJob.getPrinterJob();
         job.setPrintable(new CanvasPrintable(this.view));
@@ -1461,5 +1627,77 @@ public class MainFrame extends JFrame {
                 this.infoLabel.setText("The graph cannot be printed.");
             }
         }
+    }
+
+    private void edgeColorPanelActionPerformed(Object o, MouseEvent me) {
+        Color c = JColorChooser.showDialog(null, "Choose a Color", ((JPanel) o).getBackground());
+        if (c != null) {
+            ((JPanel) o).setBackground(c);
+            this.view.getSelection().getSelectedEdges().forEach(e -> {
+                PolylineEdgeStyle style = (PolylineEdgeStyle) e.getStyle();
+                style.setPen(new Pen(c));
+                this.graph.setStyle(e, style);
+            });
+            this.defaultEdgeStyle.setPen(new Pen(c));
+            this.view.getSelection().getSelectedEdges().clear();
+        }
+    }
+
+    private void labelSizeComboBoxItemStateChanged(ItemEvent e) {
+        int labelSize = Integer.parseInt((String) e.getItem());
+
+        this.view.getSelection().getSelectedNodes().forEach(u -> {
+            SimpleLabelStyle style = ((SimpleLabelStyle) u.getLabels().first().getStyle()).clone();
+            style.setFont(new Font(style.getFont().getFontName(), style.getFont().getStyle(), labelSize));
+            this.graph.setStyle(u.getLabels().first(), style);
+        });
+
+        Font font = this.defaultLabelStyle.getFont();
+        this.defaultLabelStyle.setFont(new Font(font.getFontName(), font.getStyle(), labelSize));
+        this.view.getSelection().getSelectedNodes().clear();
+    }
+
+    private void nodeBorderColorPanelActionPerformed(Object o, MouseEvent e) {
+        Color c = JColorChooser.showDialog(null, "Choose a Color", ((JPanel) o).getBackground());
+        if (c != null) {
+            ((JPanel) o).setBackground(c);
+            this.view.getSelection().getSelectedNodes().forEach(u -> {
+                ShinyPlateNodeStyle style = (ShinyPlateNodeStyle) u.getStyle();
+                style.setPen(new Pen(c));
+                this.graph.setStyle(u, style);
+            });
+            this.defaultNodeStyle.setPen(new Pen(c));
+            this.view.getSelection().getSelectedNodes().clear();
+        }
+    }
+
+    private void nodeFillColorPanelActionPerformed(Object o, MouseEvent e) {
+        Color c = JColorChooser.showDialog(null, "Choose a Color", ((JPanel) o).getBackground());
+        if (c != null) {
+            ((JPanel) o).setBackground(c);
+            this.view.getSelection().getSelectedNodes().forEach(u -> {
+                ShinyPlateNodeStyle style = (ShinyPlateNodeStyle) u.getStyle();
+                style.setPaint(c);
+                this.graph.setStyle(u, style);
+            });
+            this.defaultNodeStyle.setPaint(c);
+            this.view.getSelection().getSelectedNodes().clear();
+        }
+    }
+
+    private void heightComboBoxItemStateChanged(ItemEvent e) {
+        int height = Integer.parseInt((String) e.getItem());
+        this.view.getSelection().getSelectedNodes().forEach(u -> {
+            this.graph.setNodeLayout(u, new RectD(u.getLayout().getX(), u.getLayout().getY(), u.getLayout().getWidth(), height));
+        });
+        this.graph.getNodeDefaults().setSize(new SizeD(this.graph.getNodeDefaults().getSize().width, height));
+    }
+
+    private void widthComboBoxItemStateChanged(ItemEvent e) {
+        int width = Integer.parseInt((String) e.getItem());
+        this.view.getSelection().getSelectedNodes().forEach(u -> {
+            this.graph.setNodeLayout(u, new RectD(u.getLayout().getX(), u.getLayout().getY(), width, u.getLayout().getHeight()));
+        });
+        this.graph.getNodeDefaults().setSize(new SizeD(width, this.graph.getNodeDefaults().getSize().height));
     }
 }
